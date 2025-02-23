@@ -1,0 +1,37 @@
+name: quick_insure
+description: A insurance premium calculator app.
+publish_to: 'none' # Prevent accidental publishing to pub.dev
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  window_manager: ^0.4.3
+  intl: ^0.18.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.2.20
+
+flutter_native_splash:
+  color: "#C53030" # Your primary brand color
+  image: assets/icon.png # Optional logo (place it in the assets folder)
+  android: true
+  ios: true
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"
+
+flutter:
+  assets:
+    - assets/
+  uses-material-design: true

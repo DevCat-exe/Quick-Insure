@@ -1,0 +1,2 @@
+C:/Users/Asus/Desktop/Projects/quick_insure/android/app/.cxx/RelWithDebInfo/1c1j93f2/x86/CMakeFiles/edit_cache.dir
+C:/Users/Asus/Desktop/Projects/quick_insure/android/app/.cxx/RelWithDebInfo/1c1j93f2/x86/CMakeFiles/rebuild_cache.dir

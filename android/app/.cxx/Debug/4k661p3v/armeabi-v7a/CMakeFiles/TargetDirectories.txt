@@ -1,0 +1,2 @@
+C:/Users/Asus/Desktop/Projects/quick_insure/android/app/.cxx/Debug/4k661p3v/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/Asus/Desktop/Projects/quick_insure/android/app/.cxx/Debug/4k661p3v/armeabi-v7a/CMakeFiles/rebuild_cache.dir
