@@ -1,16 +1,23 @@
-# quick_insure
+# Quick Insure 🚗🔥
 
-A new Flutter project.
+Quick Insure is a **Flutter-based insurance calculator app** designed to help users calculate premiums for motor and fire insurance. The app provides a clean, intuitive interface with modern animations and a sleek design.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## Features ✨
 
-A few resources to get you started if this is your first Flutter project:
+- **Motor Insurance Calculator**: Calculate premiums for motor vehicles based on insured sum, risk factor, discounts, and more.
+- **Fire Insurance Calculator** (Coming Soon): Calculate premiums for fire insurance.
+- **Modern UI**: Sleek design with gradients, animations, and smooth transitions.
+- **Real-Time Validation**: Input fields validate data in real-time.
+- **Update Checker**: Automatically checks for updates via GitHub Releases.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Screenshots 📸
+
+| Home Screen | Motor Insurance Calculator | Result Popup |
+|-------------|----------------------------|--------------|
+| <img src="screenshots/home.png" width="200"> | <img src="screenshots/motor.png" width="200"> | <img src="screenshots/result.png" width="200"> |
+
+---
