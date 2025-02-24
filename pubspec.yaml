@@ -12,6 +12,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   window_manager: ^0.4.3
   intl: ^0.18.1
+  http: ^0.13.5
+  package_info_plus: ^4.0.2
+  url_launcher: ^6.1.11
 
 dev_dependencies:
   flutter_test:

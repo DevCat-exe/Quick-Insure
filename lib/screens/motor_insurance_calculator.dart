@@ -8,6 +8,7 @@ class MotorInsuranceCalculator extends StatefulWidget {
   const MotorInsuranceCalculator({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _MotorInsuranceCalculatorState createState() =>
       _MotorInsuranceCalculatorState();
 }

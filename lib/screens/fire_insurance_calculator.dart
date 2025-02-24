@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/custom_dropdown.dart';
 
 class FireInsuranceCalculator extends StatelessWidget {
   const FireInsuranceCalculator({super.key});

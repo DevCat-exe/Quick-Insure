@@ -1,10 +1,83 @@
 import 'package:flutter/material.dart';
 import '../screens/motor_insurance_calculator.dart';
-import '../screens/fire_insurance_calculator.dart'; // New import
 import '../widgets/calculator_card.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import '../services/update_checker.dart'; // Import the update checker
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _appVersion = "1.0.0";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _appVersion = packageInfo.version;
+    });
+  }
+
+  void _openAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("About Quick Insure"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Version: $_appVersion"),
+            SizedBox(height: 10),
+            Text("Quick Insure is your trusted insurance partner."),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Close"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _checkForUpdates(BuildContext context) async {
+    final updateChecker = UpdateChecker();
+    final isUpdateAvailable = await updateChecker.checkForUpdate(context);
+
+    if (!isUpdateAvailable) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("You are using the latest version.")),
+      );
+    }
+  }
+
+  void _showComingSoonPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Coming Soon"),
+        content: Text("The Fire Insurance Calculator is under development."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +103,46 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         elevation: 0,
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFC53030), Color(0xFFE53935)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Text(
+                "Quick Insure",
+                style: TextStyle(
+                  fontSize: 24,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.info, color: Color(0xFFC53030)),
+              title: Text("About"),
+              onTap: () {
+                Navigator.pop(context); // Close the drawer
+                _openAboutDialog(context);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.update, color: Color(0xFFC53030)),
+              title: Text("Check for Updates"),
+              onTap: () {
+                Navigator.pop(context); // Close the drawer
+                _checkForUpdates(context);
+              },
+            ),
+          ],
+        ),
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -73,18 +186,8 @@ class HomeScreen extends StatelessWidget {
                       title: "Fire",
                       icon: Icons.local_fire_department,
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            transitionDuration: Duration(milliseconds: 300),
-                            pageBuilder: (_, __, ___) =>
-                                FireInsuranceCalculator(),
-                            transitionsBuilder: (_, animation, __, child) {
-                              return FadeTransition(
-                                  opacity: animation, child: child);
-                            },
-                          ),
-                        );
+                        _showComingSoonPopup(
+                            context); // Show "Coming Soon" popup
                       },
                     ),
                   ],
