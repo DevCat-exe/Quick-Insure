@@ -6,34 +6,19 @@ class FireInsuranceCalculator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Fire Insurance Calculator"),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFC53030), Color(0xFFE53935)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+      appBar: AppBar(title: const Text("Fire Insurance Calculator")),
+      body: Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(height: 20),
+            Icon(Icons.construction, size: 50, color: Colors.grey.shade400),
+            const SizedBox(height: 20),
             Text(
-              "Fire Insurance Calculator",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFC53030),
-              ),
+              "Under Development",
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Colors.grey.shade600,
+                  ),
             ),
-            SizedBox(height: 20),
-            // Add fire-specific fields here
           ],
         ),
       ),

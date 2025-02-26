@@ -13,11 +13,11 @@ class ResultPopup extends StatelessWidget {
   final int drivers;
   final int engineCC;
 
-  const ResultPopup(
-    this.netPremium,
-    this.vat,
-    this.totalPremium, {
+  const ResultPopup({
     super.key,
+    required this.netPremium,
+    required this.vat,
+    required this.totalPremium,
     required this.insuredSum,
     required this.riskFactor,
     required this.discount,
@@ -29,76 +29,34 @@ class ResultPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat("#,##0", "en_US");
+    final theme = Theme.of(context);
+    final formatter = NumberFormat("#,##0.00", "en_US");
 
     return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
+      backgroundColor: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Insurance Premium Details",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFC53030),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 20),
-            Text(
-              "Summary",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFC53030),
-              ),
-            ),
-            SizedBox(height: 10),
-            _buildResultRow(
-                "Insured Sum:", "BDT ${formatter.format(insuredSum)}"),
-            _buildResultRow("Risk Factor:", "$riskFactor"),
+            Text("Calculation Results", style: theme.textTheme.titleLarge),
+            const SizedBox(height: 20),
+            _buildResultRow("Insured Sum:", formatter.format(insuredSum)),
+            _buildResultRow("Risk Factor:", "$riskFactor%"),
             _buildResultRow("Discount:", "$discount%"),
             _buildResultRow("NCB:", "$ncb%"),
-            _buildResultRow("Passengers:", "$passengers"),
-            _buildResultRow("Drivers:", "$drivers"),
+            _buildResultRow("Passengers:", passengers.toString()),
+            _buildResultRow("Drivers:", drivers.toString()),
             _buildResultRow("Engine CC:", "$engineCC cc"),
-            SizedBox(height: 20),
-            Divider(color: Colors.grey[300]),
-            SizedBox(height: 10),
-            _buildResultRow(
-                "Net Premium:", "BDT ${formatter.format(netPremium)}"),
-            SizedBox(height: 10),
-            _buildResultRow("VAT (15%):", "BDT ${formatter.format(vat)}"),
-            SizedBox(height: 10),
-            _buildResultRow(
-                "Total Premium:", "BDT ${formatter.format(totalPremium)}"),
-            SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFC53030),
-                  padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: Text(
-                  "Close",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+            const Divider(height: 40),
+            _buildResultRow("Net Premium:", formatter.format(netPremium)),
+            _buildResultRow("VAT (15%):", formatter.format(vat)),
+            _buildResultRow("Total Premium:", formatter.format(totalPremium)),
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: () => _copyToClipboard(context, totalPremium),
+              child: const Text("Copy Total Premium"),
             ),
           ],
         ),
@@ -108,24 +66,30 @@ class ResultPopup extends StatelessWidget {
 
   Widget _buildResultRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFC53030),
-            ),
-          ),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
     );
+  }
+
+  void _copyToClipboard(BuildContext context, double value) {
+    final formattedValue = NumberFormat("#,##0.00", "en_US").format(value);
+    Clipboard.setData(ClipboardData(text: "BDT $formattedValue")).then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Copied to clipboard"),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    });
   }
 }

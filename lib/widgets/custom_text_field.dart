@@ -2,54 +2,45 @@ import 'package:flutter/material.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
-  final String labelText;
-  final String hintText;
-  final IconData? prefixIcon;
-  final Function(String)? onChanged;
+  final String label;
+  final IconData icon;
+  final String? Function(String?)? validator;
   final TextInputType keyboardType;
-  final TextInputAction textInputAction;
 
   const CustomTextField({
     super.key,
     required this.controller,
-    required this.labelText,
-    this.hintText = "",
-    this.prefixIcon,
-    this.onChanged,
+    required this.label,
+    required this.icon,
+    this.validator,
     this.keyboardType = TextInputType.text,
-    this.textInputAction = TextInputAction.next,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    final theme = Theme.of(context);
+
+    return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      textInputAction: textInputAction,
-      onChanged: onChanged,
+      validator: validator,
       decoration: InputDecoration(
-        labelText: labelText,
-        hintText: hintText,
-        prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: Color(0xFFC53030))
-            : null,
-        suffixIcon: controller.text.isNotEmpty
-            ? IconButton(
-                icon: Icon(Icons.clear, color: Color(0xFFC53030)),
-                onPressed: () {
-                  controller.clear();
-                  if (onChanged != null) onChanged!("");
-                },
-              )
-            : null,
+        labelText: label,
+        prefixIcon: Icon(icon, color: theme.colorScheme.primary),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Color(0xFFC53030)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.outline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Color(0xFFC53030), width: 2),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.error),
+        ),
+        filled: true,
+        fillColor: theme.colorScheme.surfaceContainerHighest,
       ),
     );
   }

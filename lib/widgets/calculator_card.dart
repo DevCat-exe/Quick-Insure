@@ -13,52 +13,66 @@ class CalculatorCard extends StatefulWidget {
   });
 
   @override
-  _CalculatorCardState createState() => _CalculatorCardState();
+  State<CalculatorCard> createState() => _CalculatorCardState();
 }
 
 class _CalculatorCardState extends State<CalculatorCard> {
-  bool _isTapped = false;
+  bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isTapped = true),
-      onTapUp: (_) => setState(() => _isTapped = false),
-      onTapCancel: () => setState(() => _isTapped = false),
-      onTap: widget.onTap,
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 150),
-        transform: Matrix4.identity()..scale(_isTapped ? 0.95 : 1.0),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFC53030).withOpacity(0.8), Color(0xFFC53030)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(_isTapped ? 0.3 : 0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(widget.icon, size: 50, color: Colors.white),
-            SizedBox(height: 10),
-            Text(
-              widget.title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+    final theme = Theme.of(context);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.shadow.withOpacity(0.1),
+                blurRadius: _isHovered ? 20 : 10,
+                offset: const Offset(0, 4),
               ),
-              textAlign: TextAlign.center,
+            ],
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: widget.onTap,
+            splashColor: theme.colorScheme.primary.withOpacity(0.1),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AnimatedScale(
+                    scale: _isHovered ? 1.1 : 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      widget.icon,
+                      size: 40,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    widget.title,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -5,38 +5,32 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UpdateChecker {
-  final String githubRepo = "Mahir9011/Quick-Insure"; // Your GitHub repo
+  final String _githubRepo = "Mahir9011/Quick-Insure";
 
-  Future<bool> checkForUpdate(BuildContext context) async {
+  Future<void> checkForUpdate(BuildContext context) async {
     try {
-      // Get the latest release info from GitHub API
       final response = await http.get(Uri.parse(
-          "https://api.github.com/repos/$githubRepo/releases/latest"));
+          "https://api.github.com/repos/$_githubRepo/releases/latest"));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final latestVersion =
-            data["tag_name"].replaceAll("v", ""); // Extract version
-        final apkUrl = data["assets"][0]["browser_download_url"]; // Get APK URL
+        final latestVersion = data["tag_name"].replaceAll("v", "");
+        final packageInfo = await PackageInfo.fromPlatform();
 
-        PackageInfo packageInfo = await PackageInfo.fromPlatform();
-        String currentVersion = packageInfo.version;
-
-        if (_isNewerVersion(latestVersion, currentVersion)) {
-          // ignore: use_build_context_synchronously
-          _showUpdateDialog(context, apkUrl);
-          return true; // Update available
+        if (_isNewerVersion(latestVersion, packageInfo.version)) {
+          _showUpdateDialog(context, data["html_url"]);
+        } else {
+          _showSnackBar(context, "You're up to date!");
         }
       }
     } catch (e) {
-      print("Update check failed: $e");
+      _showSnackBar(context, "Update check failed");
     }
-    return false; // No update available
   }
 
   bool _isNewerVersion(String latest, String current) {
-    List<int> latestParts = latest.split('.').map(int.parse).toList();
-    List<int> currentParts = current.split('.').map(int.parse).toList();
+    final latestParts = latest.split('.').map(int.parse).toList();
+    final currentParts = current.split('.').map(int.parse).toList();
 
     for (int i = 0; i < latestParts.length; i++) {
       if (latestParts[i] > (i < currentParts.length ? currentParts[i] : 0)) {
@@ -46,30 +40,36 @@ class UpdateChecker {
     return false;
   }
 
-  void _showUpdateDialog(BuildContext context, String apkUrl) {
+  void _showUpdateDialog(BuildContext context, String url) {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Update Available"),
-          content: Text(
-              "A new version of the app is available. Do you want to update now?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Later"),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                await launchUrl(Uri.parse(apkUrl),
-                    mode: LaunchMode.externalApplication);
-              },
-              child: Text("Update"),
-            ),
-          ],
-        );
-      },
+      builder: (context) => AlertDialog(
+        title: const Text("New Update Available"),
+        content: const Text("A newer version is available on GitHub."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Later"),
+          ),
+          FilledButton(
+            onPressed: () => launchUrl(Uri.parse(url)),
+            child: const Text("View Update"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
     );
   }
 }

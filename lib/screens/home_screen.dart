@@ -1,18 +1,46 @@
 import 'package:flutter/material.dart';
-import '../screens/motor_insurance_calculator.dart';
-import '../widgets/calculator_card.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../services/update_checker.dart'; // Import the update checker
+import '../services/update_checker.dart';
+import '../widgets/calculator_card.dart';
+import '../widgets/sidebar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   String _appVersion = "1.0.0";
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  Future<void> _loadAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    setState(() => _appVersion = packageInfo.version);
+  }
+
+  void _openAboutDialog() => showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("About Quick Insure"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Version: $_appVersion"),
+              SizedBox(height: 12),
+              Text("Your trusted insurance partner."),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Close"),
+            ),
+          ],
+        ),
+      );
 
   @override
   void initState() {
@@ -20,68 +48,12 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadAppVersion();
   }
 
-  Future<void> _loadAppVersion() async {
-    PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    setState(() {
-      _appVersion = packageInfo.version;
-    });
-  }
-
-  void _openAboutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("About Quick Insure"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Version: $_appVersion"),
-            SizedBox(height: 10),
-            Text("Quick Insure is your trusted insurance partner."),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Close"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _checkForUpdates(BuildContext context) async {
-    final updateChecker = UpdateChecker();
-    final isUpdateAvailable = await updateChecker.checkForUpdate(context);
-
-    if (!isUpdateAvailable) {
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("You are using the latest version.")),
-      );
-    }
-  }
-
-  void _showComingSoonPopup(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Coming Soon"),
-        content: Text("The Fire Insurance Calculator is under development."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("OK"),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,114 +61,86 @@ class _HomeScreenState extends State<HomeScreen> {
             Text("Quick Insure"),
             Text(
               "Your trusted insurance partner",
-              style: TextStyle(fontSize: 14, color: Colors.white70),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
             ),
           ],
         ),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFC53030), Color(0xFFE53935)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.info_outline),
+            onPressed: _openAboutDialog,
           ),
-        ),
-        elevation: 0,
+        ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
+      drawer: AppDrawer(
+        onAboutPressed: _openAboutDialog,
+        onUpdatePressed: () => UpdateChecker().checkForUpdate(context),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
           children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFC53030), Color(0xFFE53935)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Text(
-                "Quick Insure",
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            Text(
+              "Insurance Calculators",
+              style: Theme.of(context).textTheme.displayLarge,
             ),
-            ListTile(
-              leading: Icon(Icons.info, color: Color(0xFFC53030)),
-              title: Text("About"),
-              onTap: () {
-                Navigator.pop(context); // Close the drawer
-                _openAboutDialog(context);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.update, color: Color(0xFFC53030)),
-              title: Text("Check for Updates"),
-              onTap: () {
-                Navigator.pop(context); // Close the drawer
-                _checkForUpdates(context);
-              },
+            SizedBox(height: 30),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
+                mainAxisSpacing: 20,
+                crossAxisSpacing: 20,
+                childAspectRatio: 1.1,
+                children: [
+                  CalculatorCard(
+                    title: "Motor Insurance",
+                    icon: Icons.electric_car,
+                    onTap: () => Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (_, __, ___) => MotorInsuranceCalculator(),
+                        transitionsBuilder: (_, animation, __, child) {
+                          return SlideTransition(
+                            position: Tween<Offset>(
+                              begin: Offset(0.5, 0),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  CalculatorCard(
+                    title: "Fire Insurance",
+                    icon: Icons.local_fire_department,
+                    onTap: () => _showComingSoon(),
+                  ),
+                ],
+              ),
             ),
           ],
-        ),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFF9FAFB), Color(0xFFE0E0E0)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 20),
-              Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 15,
-                  mainAxisSpacing: 15,
-                  children: [
-                    CalculatorCard(
-                      title: "Motor",
-                      icon: Icons.directions_car,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            transitionDuration: Duration(milliseconds: 300),
-                            pageBuilder: (_, __, ___) =>
-                                MotorInsuranceCalculator(),
-                            transitionsBuilder: (_, animation, __, child) {
-                              return FadeTransition(
-                                  opacity: animation, child: child);
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                    CalculatorCard(
-                      title: "Fire",
-                      icon: Icons.local_fire_department,
-                      onTap: () {
-                        _showComingSoonPopup(
-                            context); // Show "Coming Soon" popup
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
   }
+
+  void _showComingSoon() => showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Coming Soon"),
+          content: Text("This calculator is under development."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("OK"),
+            ),
+          ],
+        ),
+      );
 }

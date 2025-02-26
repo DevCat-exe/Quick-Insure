@@ -8,182 +8,155 @@ class MotorInsuranceCalculator extends StatefulWidget {
   const MotorInsuranceCalculator({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _MotorInsuranceCalculatorState createState() =>
+  State<MotorInsuranceCalculator> createState() =>
       _MotorInsuranceCalculatorState();
 }
 
 class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
-  final TextEditingController _sumController = TextEditingController();
-  final TextEditingController _passengersController = TextEditingController();
-  final TextEditingController _driversController = TextEditingController();
-  final TextEditingController _engineCapacityController =
-      TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _sumController = TextEditingController();
+  final _passengersController = TextEditingController();
+  final _driversController = TextEditingController();
+  final _engineController = TextEditingController();
 
   String _riskFactor = "2.65";
   String _discount = "0%";
   String _ncb = "0%";
-  bool _isFormValid = false;
 
-  void _checkFormValidity() {
-    setState(() {
-      _isFormValid = _sumController.text.isNotEmpty &&
-          _passengersController.text.isNotEmpty &&
-          _driversController.text.isNotEmpty &&
-          _engineCapacityController.text.isNotEmpty;
-    });
-  }
-
-  void calculatePremium(BuildContext context) {
-    try {
-      double insuredSum = double.parse(_sumController.text);
-      double riskFactor = double.parse(_riskFactor);
-      double discount = double.parse(_discount.replaceAll("%", ""));
-      double ncb = double.parse(_ncb.replaceAll("%", ""));
-      int passengers = int.parse(_passengersController.text);
-      int drivers = int.parse(_driversController.text);
-      int engineCC = int.parse(_engineCapacityController.text);
-
-      Map<String, dynamic> result = MotorInsuranceModel.calculatePremium(
-        insuredSum: insuredSum,
-        riskFactor: riskFactor,
-        discount: discount,
-        ncb: ncb,
-        passengers: passengers,
-        drivers: drivers,
-        engineCC: engineCC,
+  void _calculatePremium() {
+    if (_formKey.currentState?.validate() ?? false) {
+      final result = MotorInsuranceModel.calculatePremium(
+        insuredSum: double.parse(_sumController.text),
+        riskFactor: double.parse(_riskFactor),
+        discount: double.parse(_discount.replaceAll("%", "")),
+        ncb: double.parse(_ncb.replaceAll("%", "")),
+        passengers: int.parse(_passengersController.text),
+        drivers: int.parse(_driversController.text),
+        engineCC: int.parse(_engineController.text),
       );
 
       showDialog(
         context: context,
         builder: (context) => ResultPopup(
-          result['netPremium'],
-          result['vat'],
-          result['totalPremium'],
-          insuredSum: insuredSum,
-          riskFactor: riskFactor,
-          discount: discount,
-          ncb: ncb,
-          passengers: passengers,
-          drivers: drivers,
-          engineCC: engineCC,
+          netPremium: result['netPremium'],
+          vat: result['vat'],
+          totalPremium: result['totalPremium'],
+          insuredSum: double.parse(_sumController.text),
+          riskFactor: double.parse(_riskFactor),
+          discount: double.parse(_discount.replaceAll("%", "")),
+          ncb: double.parse(_ncb.replaceAll("%", "")),
+          passengers: int.parse(_passengersController.text),
+          drivers: int.parse(_driversController.text),
+          engineCC: int.parse(_engineController.text),
         ),
       );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Invalid input. Please check your values.")),
-      );
     }
+  }
+
+  @override
+  void dispose() {
+    _sumController.dispose();
+    _passengersController.dispose();
+    _driversController.dispose();
+    _engineController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Motor Insurance Calculator"),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFC53030), Color(0xFFE53935)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
+        title: const Text("Motor Insurance Calculator"),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 20),
-            CustomTextField(
-              controller: _sumController,
-              labelText: "Insured Sum (Tk)",
-              hintText: "Enter insured amount",
-              prefixIcon: Icons.attach_money,
-              onChanged: (_) => _checkFormValidity(),
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.next,
-            ),
-            SizedBox(height: 15),
-            CustomDropdown(
-              value: _riskFactor,
-              items: ["2.65", "2.45", "2.15"],
-              onChanged: (value) => setState(() => _riskFactor = value!),
-              labelText: "Risk Factor",
-              icon: Icons.trending_up,
-            ),
-            SizedBox(height: 15),
-            CustomDropdown(
-              value: _discount,
-              items: ["0%", "10%", "20%"],
-              onChanged: (value) => setState(() => _discount = value!),
-              labelText: "Discount",
-              icon: Icons.discount,
-            ),
-            SizedBox(height: 15),
-            CustomDropdown(
-              value: _ncb,
-              items: ["0%", "30%", "40%", "50%"],
-              onChanged: (value) => setState(() => _ncb = value!),
-              labelText: "No Claim Bonus (NCB)",
-              icon: Icons.money_off,
-            ),
-            SizedBox(height: 15),
-            CustomTextField(
-              controller: _passengersController,
-              labelText: "Number of Passengers",
-              hintText: "Enter number of passengers",
-              prefixIcon: Icons.people,
-              onChanged: (_) => _checkFormValidity(),
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.next,
-            ),
-            SizedBox(height: 15),
-            CustomTextField(
-              controller: _driversController,
-              labelText: "Number of Drivers",
-              hintText: "Enter number of drivers",
-              prefixIcon: Icons.person,
-              onChanged: (_) => _checkFormValidity(),
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.next,
-            ),
-            SizedBox(height: 15),
-            CustomTextField(
-              controller: _engineCapacityController,
-              labelText: "Engine Capacity (cc)",
-              hintText: "Enter engine capacity",
-              prefixIcon: Icons.settings,
-              onChanged: (_) => _checkFormValidity(),
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.done,
-            ),
-            SizedBox(height: 25),
-            Center(
-              child: ElevatedButton(
-                onPressed:
-                    _isFormValid ? () => calculatePremium(context) : null,
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 30),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  backgroundColor: Color(0xFFC53030),
-                  elevation: 5,
-                ),
-                child: Text(
-                  "Calculate Premium",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              CustomTextField(
+                controller: _sumController,
+                label: "Insured Sum (Tk)",
+                icon: Icons.attach_money,
+                validator: (value) =>
+                    value?.isEmpty ?? true ? "Required field" : null,
+                keyboardType: TextInputType.number,
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+              CustomDropdown(
+                value: _riskFactor,
+                options: const ["2.65", "2.45", "2.15"],
+                label: "Risk Factor",
+                icon: Icons.trending_up,
+                onChanged: (value) => setState(() => _riskFactor = value!),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomDropdown(
+                      value: _discount,
+                      options: const ["0%", "10%", "20%"],
+                      label: "Discount",
+                      icon: Icons.discount,
+                      onChanged: (value) => setState(() => _discount = value!),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: CustomDropdown(
+                      value: _ncb,
+                      options: const ["0%", "30%", "40%", "50%"],
+                      label: "No Claim Bonus",
+                      icon: Icons.verified_user,
+                      onChanged: (value) => setState(() => _ncb = value!),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomTextField(
+                      controller: _passengersController,
+                      label: "Passengers",
+                      icon: Icons.people_alt,
+                      validator: (value) =>
+                          value?.isEmpty ?? true ? "Required field" : null,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: CustomTextField(
+                      controller: _driversController,
+                      label: "Drivers",
+                      icon: Icons.person,
+                      validator: (value) =>
+                          value?.isEmpty ?? true ? "Required field" : null,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              CustomTextField(
+                controller: _engineController,
+                label: "Engine CC",
+                icon: Icons.engineering,
+                validator: (value) =>
+                    value?.isEmpty ?? true ? "Required field" : null,
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: _calculatePremium,
+                child: const Text("Calculate Premium"),
+              ),
+            ],
+          ),
         ),
       ),
     );
