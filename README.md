@@ -13,11 +13,3 @@ Quick Insure is a **Flutter-based insurance calculator app** designed to help us
 - **Update Checker**: Automatically checks for updates via GitHub Releases.
 
 ---
-
-## Screenshots 📸
-
-| Home Screen | Motor Insurance Calculator | Result Popup |
-|-------------|----------------------------|--------------|
-| <img src="screenshots/home.png" width="200"> | <img src="screenshots/motor.png" width="200"> | <img src="screenshots/result.png" width="200"> |
-
----
