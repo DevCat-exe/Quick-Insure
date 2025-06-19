@@ -29,84 +29,100 @@ class ResultPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat("#,##0", "en_US");
-
+    final theme = Theme.of(context);
+    final cardColor = Theme.of(context).dialogTheme.backgroundColor ??
+        theme.colorScheme.surface;
+    final accent = theme.colorScheme.primary;
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Insurance Premium Details",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFC53030),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 20),
-            Text(
-              "Summary",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFC53030),
-              ),
-            ),
-            SizedBox(height: 10),
-            _buildResultRow(
-                "Insured Sum:", "BDT ${formatter.format(insuredSum)}"),
-            _buildResultRow("Risk Factor:", "$riskFactor"),
-            _buildResultRow("Discount:", "$discount%"),
-            _buildResultRow("NCB:", "$ncb%"),
-            _buildResultRow("Passengers:", "$passengers"),
-            _buildResultRow("Drivers:", "$drivers"),
-            _buildResultRow("Engine CC:", "$engineCC cc"),
-            SizedBox(height: 20),
-            Divider(color: Colors.grey[300]),
-            SizedBox(height: 10),
-            _buildResultRow(
-                "Net Premium:", "BDT ${formatter.format(netPremium)}"),
-            SizedBox(height: 10),
-            _buildResultRow("VAT (15%):", "BDT ${formatter.format(vat)}"),
-            SizedBox(height: 10),
-            _buildResultRow(
-                "Total Premium:", "BDT ${formatter.format(totalPremium)}"),
-            SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFC53030),
-                  padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: Text(
-                  "Close",
+      child: SizedBox(
+        width: 440,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Insurance Premium Details",
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: theme.colorScheme.primary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 20),
+                Text(
+                  "Summary",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
-              ),
+                SizedBox(height: 10),
+                _buildResultRow(
+                    "Insured Sum:",
+                    "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
+                    theme),
+                _buildResultRow("Risk Factor:", "$riskFactor", theme),
+                _buildResultRow("Discount:", "$discount%", theme),
+                _buildResultRow("NCB:", "$ncb%", theme),
+                _buildResultRow("Passengers:", "$passengers", theme),
+                _buildResultRow("Drivers:", "$drivers", theme),
+                _buildResultRow("Engine CC:", "$engineCC cc", theme),
+                SizedBox(height: 20),
+                Divider(
+                    color: theme.dividerColor.withAlpha((0.2 * 255).toInt())),
+                SizedBox(height: 10),
+                _buildResultRow(
+                    "Net Premium:",
+                    "BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}",
+                    theme),
+                SizedBox(height: 10),
+                _buildResultRow("VAT (15%):",
+                    "BDT ${NumberFormat("#,##0", "en_US").format(vat)}", theme),
+                SizedBox(height: 10),
+                _buildResultRow(
+                    "Total Premium:",
+                    "BDT ${NumberFormat("#,##0", "en_US").format(totalPremium)}",
+                    theme),
+                SizedBox(height: 20),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accent,
+                      padding:
+                          EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      "Close",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildResultRow(String label, String value) {
+  Widget _buildResultRow(String label, String value, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
@@ -114,15 +130,15 @@ class ResultPopup extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+            style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black),
           ),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFC53030),
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
           ),
         ],
       ),

@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class FireInsuranceCalculator extends StatelessWidget {
   const FireInsuranceCalculator({super.key});
 
+  static String get displayName => "Fire Insurance";
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Fire Insurance Calculator"),
+        title: Text(FireInsuranceCalculator.displayName),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

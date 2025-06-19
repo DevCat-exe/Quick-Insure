@@ -1,6 +1,6 @@
 name: quick_insure
 description: A insurance premium calculator app.
-publish_to: 'none' # Prevent accidental publishing to pub.dev
+publish_to: "none" # Prevent accidental publishing to pub.dev
 version: 1.0.0+1
 
 environment:
@@ -15,6 +15,10 @@ dependencies:
   http: ^0.13.5
   package_info_plus: ^4.0.2
   url_launcher: ^6.1.11
+  fluttertoast: ^8.2.4
+  github: ^9.13.0
+  flutter_statusbarcolor_ns: ^0.5.0
+  flutter_markdown: ^0.7.7+1
 
 dev_dependencies:
   flutter_test:

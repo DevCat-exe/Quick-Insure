@@ -11,6 +11,8 @@ class MotorInsuranceCalculator extends StatefulWidget {
   // ignore: library_private_types_in_public_api
   _MotorInsuranceCalculatorState createState() =>
       _MotorInsuranceCalculatorState();
+
+  static String get displayName => "Motor Insurance";
 }
 
 class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
@@ -80,7 +82,7 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Motor Insurance Calculator"),
+        title: Text(MotorInsuranceCalculator.displayName),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
