@@ -5,12 +5,16 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../services/update_checker.dart';
 import '../screens/motor_insurance_calculator.dart';
 import '../widgets/calculator_card.dart';
+import '../screens/history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onToggleDarkMode;
   final bool darkMode;
-  const HomeScreen(
-      {super.key, required this.onToggleDarkMode, required this.darkMode});
+  const HomeScreen({
+    super.key,
+    required this.onToggleDarkMode,
+    required this.darkMode,
+  });
 
   @override
   HomeScreenState createState() => HomeScreenState();
@@ -41,7 +45,8 @@ class HomeScreenState extends State<HomeScreen>
 
   Future<void> _setStatusBar() async {
     await FlutterStatusbarcolor.setStatusBarColor(
-        Theme.of(context).colorScheme.primary);
+      Theme.of(context).colorScheme.primary,
+    );
     FlutterStatusbarcolor.setStatusBarWhiteForeground(true);
   }
 
@@ -110,19 +115,28 @@ class HomeScreenState extends State<HomeScreen>
                           Text("Version: $_appVersion"),
                           SizedBox(height: 10),
                           Text(
-                              "Quick Insure is your trusted insurance partner."),
+                            "Quick Insure is your trusted insurance partner.",
+                          ),
                           SizedBox(height: 18),
-                          Text("Changelog:",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.primary)),
+                          Text(
+                            "Changelog:",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
                           SizedBox(height: 6),
-                          Text("Error loading changelog: ",
-                              style: TextStyle(color: theme.colorScheme.error)),
-                          Text(snapshot.error.toString(),
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  color: theme.colorScheme.error)),
+                          Text(
+                            "Error loading changelog: ",
+                            style: TextStyle(color: theme.colorScheme.error),
+                          ),
+                          Text(
+                            snapshot.error.toString(),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: theme.colorScheme.error,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -152,30 +166,37 @@ class HomeScreenState extends State<HomeScreen>
                       SizedBox(height: 10),
                       Text("Quick Insure is your trusted insurance partner."),
                       SizedBox(height: 18),
-                      Text("Changelog:",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary)),
+                      Text(
+                        "Changelog:",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
                       SizedBox(height: 6),
                       if (snapshot.connectionState == ConnectionState.waiting)
                         Center(child: CircularProgressIndicator(strokeWidth: 2))
                       else if (changelog != null && changelog.trim().isNotEmpty)
                         Container(
-                          constraints:
-                              BoxConstraints(maxHeight: 320, minHeight: 80),
+                          constraints: BoxConstraints(
+                            maxHeight: 320,
+                            minHeight: 80,
+                          ),
                           child: Scrollbar(
                             thumbVisibility: true,
                             child: SingleChildScrollView(
-                              child: MarkdownBody(
-                                data: changelog,
-                              ),
+                              child: MarkdownBody(data: changelog),
                             ),
                           ),
                         )
                       else
-                        Text("No changelog found for this version.",
-                            style: TextStyle(
-                                fontSize: 14, color: Colors.grey[600])),
+                        Text(
+                          "No changelog found for this version.",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -200,34 +221,64 @@ class HomeScreenState extends State<HomeScreen>
   }
 
   void _showComingSoonPopup(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final accent = theme.colorScheme.primary;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.local_fire_department,
-                color: Theme.of(context).colorScheme.primary, size: 32),
-            SizedBox(width: 12),
-            Text("Coming Soon!"),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(height: 8),
-            Text(
-                "The Fire Insurance Calculator is under development. Stay tuned for updates!"),
-            SizedBox(height: 16),
-            Icon(Icons.construction, color: Colors.orangeAccent, size: 48),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("OK", style: TextStyle(fontWeight: FontWeight.bold)),
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+          decoration: BoxDecoration(
+            color: theme.dialogTheme.backgroundColor,
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(isDark ? 100 : 40),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
+              ),
+            ],
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: accent.withAlpha(20),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.auto_awesome, color: accent, size: 56),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                "Coming Soon",
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "The Fire Insurance Calculator is currently under construction. We're working hard to bring this feature to you soon!",
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Got it!"),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -246,7 +297,7 @@ class HomeScreenState extends State<HomeScreen>
                 gradient: LinearGradient(
                   colors: [
                     Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.primary.withAlpha(200)
+                    Theme.of(context).colorScheme.primary.withAlpha(200),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -271,15 +322,19 @@ class HomeScreenState extends State<HomeScreen>
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Quick Insure',
-                          style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white)),
+                      Text(
+                        'Quick Insure',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                       SizedBox(height: 4),
-                      Text('v$_appVersion',
-                          style:
-                              TextStyle(fontSize: 14, color: Colors.white70)),
+                      Text(
+                        'v$_appVersion',
+                        style: TextStyle(fontSize: 14, color: Colors.white70),
+                      ),
                     ],
                   ),
                 ],
@@ -287,23 +342,49 @@ class HomeScreenState extends State<HomeScreen>
             ),
             const SizedBox(height: 12),
             ListTile(
-              leading: Icon(Icons.system_update_alt,
-                  color: Theme.of(context).colorScheme.primary),
-              title: Text('Check Update',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              leading: Icon(
+                Icons.system_update_alt,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              title: Text(
+                'Check Update',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
               onTap: _checkForUpdate,
             ),
             ListTile(
-              leading: Icon(Icons.info_outline,
-                  color: Theme.of(context).colorScheme.primary),
-              title: Text('About',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              leading: Icon(
+                Icons.history,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              title: Text(
+                'Calculation History',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              onTap: () {
+                Navigator.pop(context); // Close drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const HistoryScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.info_outline,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              title: Text(
+                'About',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
               onTap: () => _openAboutDialog(context),
             ),
             SwitchListTile(
@@ -311,11 +392,12 @@ class HomeScreenState extends State<HomeScreen>
                 widget.darkMode ? Icons.dark_mode : Icons.light_mode,
                 color: Theme.of(context).colorScheme.primary,
               ),
-              title: Text('Dark Mode',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              title: Text(
+                'Dark Mode',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
               value: widget.darkMode,
               onChanged: (_) => widget.onToggleDarkMode(),
             ),
@@ -325,10 +407,9 @@ class HomeScreenState extends State<HomeScreen>
               child: Center(
                 child: Text(
                   '© 2025 Quick Insure',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.grey[500]),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey[500]),
                 ),
               ),
             ),
@@ -367,10 +448,11 @@ class HomeScreenState extends State<HomeScreen>
                     icon: Icons.directions_car,
                     onTap: () {
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  MotorInsuranceCalculator()));
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MotorInsuranceCalculator(),
+                        ),
+                      );
                     },
                   ),
                   CalculatorCard(
