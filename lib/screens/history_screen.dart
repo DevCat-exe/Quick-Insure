@@ -97,26 +97,33 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               ),
                             ),
                           ),
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.picture_as_pdf_outlined,
-                                    size: 18, color: theme.colorScheme.primary),
-                                tooltip: "Export PDF",
-                                onPressed: () => ExportService.exportToPdf(
-                                  title: item.type,
-                                  totalPremium: item.totalPremium,
-                                  details: item.details,
+                          Flexible(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.picture_as_pdf_outlined,
+                                      size: 18,
+                                      color: theme.colorScheme.primary),
+                                  tooltip: "Export PDF",
+                                  onPressed: () => ExportService.exportToPdf(
+                                    title: item.type,
+                                    totalPremium: item.totalPremium,
+                                    details: item.details,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                item.date,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withAlpha(120),
+                                Flexible(
+                                  child: Text(
+                                    item.date,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withAlpha(120),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),

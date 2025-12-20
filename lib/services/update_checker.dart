@@ -6,14 +6,39 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
 class UpdateChecker {
-  final String githubRepo = "DevCat-exe/Quick-Insure"; // Updated GitHub repo
+  final String githubRepo = "DevCat-exe/Quick-Insure";
   String get latestReleaseUrl =>
       "https://github.com/$githubRepo/releases/latest";
 
   Future<bool> checkForUpdate(BuildContext context) async {
+    // Show loading feedback
+    final theme = Theme.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 8,
+              height: 20,
+            ),
+            CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+            SizedBox(width: 12),
+            Text('Checking for updates...'),
+          ],
+        ),
+        duration: Duration(seconds: 10),
+      ),
+    );
+
     try {
       final response = await http.get(Uri.parse(
           "https://api.github.com/repos/$githubRepo/releases/latest"));
+
+      // Hide loading snackbar
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -26,16 +51,68 @@ class UpdateChecker {
         String currentVersion = packageInfo.version;
 
         if (_isNewerVersion(latestVersion, currentVersion)) {
-          // ignore: use_build_context_synchronously
-          _showUpdateChangelogDialog(context, changelog, apkUrl);
+          _showUpdateChangelogDialog(context, changelog, apkUrl, latestVersion);
           return true; // Update available
+        } else {
+          // No update available
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "You are using the latest version! (v$currentVersion)",
+                style:
+                    theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
+              ),
+              backgroundColor: theme.colorScheme.primary,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              duration: const Duration(seconds: 3),
+            ),
+          );
         }
+      } else {
+        // API error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Failed to check for updates. Please try again later.",
+              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
+            ),
+            backgroundColor: theme.colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     } catch (e) {
-      // debugPrint is preferred for non-production logs
+      // Hide loading snackbar on error
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+      // Network or parsing error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Network error. Please check your connection and try again.",
+            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
+          ),
+          backgroundColor: theme.colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          duration: const Duration(seconds: 3),
+        ),
+      );
       debugPrint("Update check failed: $e");
     }
-    return false; // No update available
+    return false; // No update available or error occurred
   }
 
   bool _isNewerVersion(String latest, String current) {
@@ -50,8 +127,8 @@ class UpdateChecker {
     return false;
   }
 
-  void _showUpdateChangelogDialog(
-      BuildContext context, String? changelog, String apkUrl) {
+  void _showUpdateChangelogDialog(BuildContext context, String? changelog,
+      String apkUrl, String newVersion) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -64,6 +141,13 @@ class UpdateChecker {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text("New Version: v$newVersion",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    )),
+                SizedBox(height: 8),
                 Text("What's new:",
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 SizedBox(height: 8),

@@ -82,7 +82,7 @@ class HomeScreenState extends State<HomeScreen>
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     if (!mounted) return;
     setState(() {
-      _appVersion = packageInfo.version;
+      _appVersion = "v${packageInfo.version}";
     });
   }
 
