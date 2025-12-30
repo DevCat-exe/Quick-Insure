@@ -76,8 +76,3 @@ flutter run
 
 * 🔥 Fire Insurance Calculator
 * 🏥 Health Insurance Calculator
-
----
-
-
-Just say the word 🐱
