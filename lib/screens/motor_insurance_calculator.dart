@@ -5,6 +5,7 @@ import '../widgets/result_popup.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_dropdown.dart';
 import '../services/history_service.dart';
+import '../main.dart';
 
 class MotorInsuranceCalculator extends StatefulWidget {
   const MotorInsuranceCalculator({super.key});
@@ -37,7 +38,7 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
     });
   }
 
-  void calculatePremium(BuildContext context) async {
+  void calculatePremium() async {
     try {
       double insuredSum = double.parse(_sumController.text);
       double riskFactor = double.parse(_riskFactor);
@@ -62,11 +63,14 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
         type: 'Motor Insurance',
         totalPremium: result['totalPremium'],
         details: {
-          'Insured Sum': insuredSum,
-          'Risk Factor': riskFactor,
-          'Discount': discount,
-          'NCB': ncb,
-          'Engine CC': engineCC,
+          'Insured Sum': "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
+          'Engine CC': "$engineCC cc",
+          'Seating Capacity': "${passengers + drivers}",
+          'Risk Factor': "$riskFactor",
+          'Discount': "$discount%",
+          'NCB': "$ncb%",
+          'Net Premium': "BDT ${NumberFormat("#,##0", "en_US").format(result['netPremium'])}",
+          'VAT (15%)': "BDT ${NumberFormat("#,##0", "en_US").format(result['vat'])}",
         },
       );
       await HistoryService.saveCalculation(historyItem);
@@ -89,10 +93,13 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Invalid input. Please check your values.")),
-      );
+      final messenger = scaffoldMessengerKey.currentState;
+      if (messenger != null) {
+        messenger.showSnackBar(
+          const SnackBar(
+              content: Text("Invalid input. Please check your values.")),
+        );
+      }
     }
   }
 
@@ -118,19 +125,19 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
             _buildSectionHeader(theme, "Vehicle Details"),
             const SizedBox(height: 20),
             CustomTextField(
-              controller: _engineCapacityController,
-              labelText: "Engine Capacity (cc)",
-              hintText: "e.g. 1500",
-              prefixIcon: Icons.settings_input_component,
+              controller: _sumController,
+              labelText: "Insured Sum (Tk)",
+              hintText: "e.g. 1,000,000",
+              prefixIcon: Icons.account_balance_wallet,
               onChanged: (_) => _checkFormValidity(),
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 16),
             CustomTextField(
-              controller: _sumController,
-              labelText: "Insured Sum (Tk)",
-              hintText: "e.g. 1,000,000",
-              prefixIcon: Icons.account_balance_wallet,
+              controller: _engineCapacityController,
+              labelText: "Engine Capacity (cc)",
+              hintText: "e.g. 1500",
+              prefixIcon: Icons.settings_input_component,
               onChanged: (_) => _checkFormValidity(),
               keyboardType: TextInputType.number,
             ),
@@ -167,7 +174,7 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
             const SizedBox(height: 20),
             CustomDropdown(
               value: _riskFactor,
-              items: ["2.65", "2.45", "2.15"],
+              items: ["2.65", "2.40", "2.15"],
               onChanged: (value) {
                 if (value != null) {
                   setState(() => _riskFactor = value);
@@ -182,7 +189,7 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
                 Expanded(
                   child: CustomDropdown(
                     value: _discount,
-                    items: ["0%", "10%", "20%"],
+                    items: ["0%", "10%", "20%", "30%"],
                     onChanged: (value) {
                       if (value != null) {
                         setState(() => _discount = value);
@@ -213,7 +220,7 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed:
-                    _isFormValid ? () => calculatePremium(context) : null,
+                    _isFormValid ? () => calculatePremium() : null,
                 child: const Text("Calculate Premium"),
               ),
             ),

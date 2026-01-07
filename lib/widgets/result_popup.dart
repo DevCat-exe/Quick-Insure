@@ -34,6 +34,10 @@ class ResultPopup extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final accent = theme.colorScheme.primary;
     final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 380;
+    final isMediumScreen = screenWidth < 480;
+    
+    final double headerFontSize = isSmallScreen ? 20 : 24;
 
     return Dialog(
       backgroundColor: Colors.transparent, // Background handled by Container
@@ -62,8 +66,10 @@ class ResultPopup extends StatelessWidget {
               children: [
                 // Header with Gradient
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                  padding: EdgeInsets.symmetric(
+                    vertical: isSmallScreen ? 20 : 28, 
+                    horizontal: isSmallScreen ? 16 : 24,
+                  ),
                   width: double.infinity,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -74,13 +80,13 @@ class ResultPopup extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      const Icon(Icons.receipt_long,
-                          color: Colors.white, size: 48),
-                      const SizedBox(height: 16),
-                      const Text(
+                      Icon(Icons.receipt_long,
+                          color: Colors.white, size: isSmallScreen ? 40 : 48),
+                      SizedBox(height: isSmallScreen ? 10 : 16),
+                      Text(
                         "Calculation Details",
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: headerFontSize,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
                           letterSpacing: -0.5,
@@ -91,97 +97,119 @@ class ResultPopup extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionHeader(theme, "Vehicle Information"),
-                      const SizedBox(height: 12),
-                      _buildResultRow("Engine CC:", "$engineCC cc", theme),
-                      _buildResultRow("Passengers:", "$passengers", theme),
-                      _buildResultRow("Drivers:", "$drivers", theme),
-                      const SizedBox(height: 24),
+                       _buildSectionHeader(theme, "Vehicle Information"),
+                      SizedBox(height: isSmallScreen ? 8 : 12),
+                      _buildResultRow("Engine CC:", "$engineCC cc", theme, isSmallScreen: isSmallScreen),
+                      _buildResultRow("Passengers:", "$passengers", theme, isSmallScreen: isSmallScreen),
+                      _buildResultRow("Drivers:", "$drivers", theme, isSmallScreen: isSmallScreen),
+                      _buildResultRow("Seating Capacity:", "${passengers + drivers}", theme, isSmallScreen: isSmallScreen),
+                      SizedBox(height: isSmallScreen ? 16 : 24),
                       _buildSectionHeader(theme, "Risk & Discounts"),
-                      const SizedBox(height: 12),
-                      _buildResultRow("Risk Factor:", "$riskFactor", theme),
-                      _buildResultRow("Discount:", "$discount%", theme),
-                      _buildResultRow("NCB:", "$ncb%", theme),
-                      const SizedBox(height: 24),
-                      Divider(color: theme.dividerColor.withAlpha(40)),
-                      const SizedBox(height: 24),
-                      _buildPremiumRow(
-                          "Insured Sum",
-                          "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
-                          theme,
-                          isBold: false),
-                      _buildPremiumRow(
-                          "Net Premium",
-                          "BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}",
-                          theme,
-                          isBold: false),
-                      _buildPremiumRow(
-                          "VAT (15%)",
-                          "BDT ${NumberFormat("#,##0", "en_US").format(vat)}",
-                          theme,
-                          isBold: false),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 16, horizontal: 20),
-                        decoration: BoxDecoration(
-                          color: accent.withAlpha(15),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: accent.withAlpha(40)),
-                        ),
-                        child: _buildPremiumRow(
-                          "Total Premium",
-                          "BDT ${NumberFormat("#,##0", "en_US").format(totalPremium)}",
-                          theme,
-                          isBold: true,
-                          highlight: true,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => ExportService.exportToPdf(
-                                title: "Motor Insurance",
-                                totalPremium: totalPremium,
-                                details: {
-                                  "Insured Sum": insuredSum,
-                                  "Net Premium": netPremium,
-                                  "VAT (15%)": vat,
-                                  "Engine CC": engineCC,
-                                  "Passengers": passengers,
-                                  "Drivers": drivers,
-                                  "Risk Factor": riskFactor,
-                                  "Discount": "$discount%",
-                                  "NCB": "$ncb%",
-                                },
-                              ),
-                              icon: const Icon(Icons.picture_as_pdf),
-                              label: const Text("Export PDF"),
-                              style: OutlinedButton.styleFrom(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 20),
-                                side: BorderSide(
-                                    color: theme.colorScheme.primary),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                      SizedBox(height: isSmallScreen ? 8 : 12),
+                       _buildResultRow("Risk Factor:", "$riskFactor", theme, isSmallScreen: isSmallScreen),
+                       _buildResultRow("Discount:", "$discount%", theme, isSmallScreen: isSmallScreen),
+                       _buildResultRow("NCB:", "$ncb%", theme, isSmallScreen: isSmallScreen),
+                       SizedBox(height: isSmallScreen ? 16 : 24),
+                        Divider(color: theme.dividerColor.withAlpha(40)),
+                        SizedBox(height: isSmallScreen ? 16 : 24),
+                        _buildPremiumRow(
+                            "Insured Sum",
+                            "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
+                            theme,
+                            isBold: false,
+                            isSmallScreen: isSmallScreen),
+                        _buildPremiumRow(
+                            "Net Premium",
+                            "BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}",
+                            theme,
+                            isBold: false,
+                            isSmallScreen: isSmallScreen),
+                        _buildPremiumRow(
+                            "VAT (15%)",
+                            "BDT ${NumberFormat("#,##0", "en_US").format(vat)}",
+                            theme,
+                            isBold: false,
+                            isSmallScreen: isSmallScreen),
+                       const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(
+                              vertical: isSmallScreen ? 12 : 16, 
+                              horizontal: isSmallScreen ? 14 : 20),
+                          decoration: BoxDecoration(
+                            color: accent.withAlpha(15),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: accent.withAlpha(40)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Total Premium",
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontSize: isSmallScreen ? 14 : 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: theme.colorScheme.primary,
                                 ),
                               ),
-                            ),
+                              const SizedBox(height: 6),
+                              Text(
+                                "BDT ${NumberFormat("#,##0", "en_US").format(totalPremium)}",
+                                style: TextStyle(
+                                  fontSize: isMediumScreen ? 18 : 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text("Done"),
-                            ),
-                          ),
-                        ],
+                        ),
+                      SizedBox(height: isSmallScreen ? 20 : 32),
+                      Row(
+                         children: [
+                           Expanded(
+                             child: OutlinedButton.icon(
+                               label: const Text("Export PDF"),
+                               icon: const Icon(Icons.picture_as_pdf, size: 18),
+                               style: OutlinedButton.styleFrom(
+                                 padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 14 : 20),
+                                 side: BorderSide(
+                                     color: theme.colorScheme.primary),
+                                 shape: RoundedRectangleBorder(
+                                   borderRadius: BorderRadius.circular(16),
+                                 ),
+                               ),
+                               onPressed: () => ExportService.exportToPdf(
+                                 title: "Motor Insurance",
+                                 totalPremium: totalPremium,
+                                 details: {
+                                   "Insured Sum": "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
+                                   "Engine CC": "$engineCC cc",
+                                   "Seating Capacity": "${passengers + drivers}",
+                                   "Risk Factor": "$riskFactor",
+                                   "Discount": "$discount%",
+                                   "NCB": "$ncb%",
+                                   "Net Premium": "BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}",
+                                   "VAT (15%)": "BDT ${NumberFormat("#,##0", "en_US").format(vat)}",
+                                 },
+                               ),
+                             ),
+                           ),
+                           const SizedBox(width: 12),
+                           Expanded(
+                             child: ElevatedButton(
+                               style: ElevatedButton.styleFrom(
+                                 padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 14 : 20),
+                               ),
+                               onPressed: () => Navigator.pop(context),
+                               child: const Text("Done"),
+                             ),
+                           ),
+                         ],
                       ),
                     ],
                   ),
@@ -206,18 +234,23 @@ class ResultPopup extends StatelessWidget {
     );
   }
 
-  Widget _buildResultRow(String label, String value, ThemeData theme) {
+  Widget _buildResultRow(String label, String value, ThemeData theme, {required bool isSmallScreen}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: theme.textTheme.bodyMedium),
-          Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: theme.colorScheme.secondary,
+          Text(label, style: theme.textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 13 : null)),
+          Flexible(
+            child: Text(
+              value,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.secondary,
+                fontSize: isSmallScreen ? 13 : null,
+              ),
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
             ),
           ),
         ],
@@ -226,28 +259,42 @@ class ResultPopup extends StatelessWidget {
   }
 
   Widget _buildPremiumRow(String label, String value, ThemeData theme,
-      {required bool isBold, bool highlight = false}) {
+      {required bool isBold, bool highlight = false, required bool isSmallScreen}) {
+    final double labelFontSize = highlight 
+        ? (isSmallScreen ? 16 : 18) 
+        : (isSmallScreen ? 14 : 16);
+    final double valueFontSize = highlight 
+        ? (isSmallScreen ? 18 : 20) 
+        : (isSmallScreen ? 14 : 16);
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontSize: highlight ? 18 : 16,
-              fontWeight: isBold ? FontWeight.w900 : FontWeight.w500,
-              color: highlight ? theme.colorScheme.primary : null,
+          Flexible(
+            child: Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontSize: labelFontSize,
+                fontWeight: isBold ? FontWeight.w900 : FontWeight.w500,
+                color: highlight ? theme.colorScheme.primary : null,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: highlight ? 20 : 16,
-              fontWeight: FontWeight.w900,
-              color: highlight
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.secondary,
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: valueFontSize,
+                fontWeight: FontWeight.w900,
+                color: highlight
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.secondary,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

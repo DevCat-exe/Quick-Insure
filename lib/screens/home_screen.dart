@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_statusbarcolor_ns/flutter_statusbarcolor_ns.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../services/update_checker.dart';
 import '../screens/motor_insurance_calculator.dart';
 import '../widgets/calculator_card.dart';
 import '../screens/history_screen.dart';
 
+
 class HomeScreen extends StatefulWidget {
   final VoidCallback onToggleDarkMode;
   final bool darkMode;
+  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
   const HomeScreen({
     super.key,
     required this.onToggleDarkMode,
     required this.darkMode,
+    required this.scaffoldMessengerKey,
   });
 
   @override
@@ -26,6 +29,7 @@ class HomeScreenState extends State<HomeScreen>
   late AnimationController _controller;
   late Animation<double> _fadeInAnimation;
   final UpdateChecker _updateChecker = UpdateChecker();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -40,14 +44,21 @@ class HomeScreenState extends State<HomeScreen>
       curve: Curves.easeInOut,
     );
     _controller.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _setStatusBar();
   }
 
   Future<void> _setStatusBar() async {
-    await FlutterStatusbarcolor.setStatusBarColor(
-      Theme.of(context).colorScheme.primary,
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Theme.of(context).colorScheme.primary,
+        statusBarIconBrightness: Brightness.light,
+      ),
     );
-    FlutterStatusbarcolor.setStatusBarWhiteForeground(true);
   }
 
   @override
@@ -57,36 +68,40 @@ class HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _checkForUpdate() async {
-    bool updated = await _updateChecker.checkForUpdate(context);
+    bool updated = await _updateChecker.checkForUpdate(context, widget.scaffoldMessengerKey);
     if (!updated && mounted) {
       final theme = Theme.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
             "You are using the latest version!",
-            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
+            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white, fontSize: 13),
           ),
-          backgroundColor: theme.colorScheme.primary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            backgroundColor: theme.colorScheme.primary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            duration: const Duration(seconds: 2),
           ),
-          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+        );
+      }
   }
 
   Future<void> _loadAppVersion() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     if (!mounted) return;
     setState(() {
-      _appVersion = "v${packageInfo.version}";
+      _appVersion = packageInfo.version;
     });
   }
 
   void _openAboutDialog(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final dialogWidth = screenWidth > 600 ? 500.0 : screenWidth * 0.95;
+    
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -99,14 +114,13 @@ class HomeScreenState extends State<HomeScreen>
             return AlertDialog(
               title: Text("About Quick Insure"),
               content: SizedBox(
-                width: 480,
+                width: dialogWidth,
                 child: Scrollbar(
                   thumbVisibility: true,
                   child: SingleChildScrollView(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
                         minHeight: 120,
-                        maxHeight: 420, // Ensures dialog never overflows
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -154,7 +168,7 @@ class HomeScreenState extends State<HomeScreen>
           return AlertDialog(
             title: Text("About Quick Insure"),
             content: SizedBox(
-              width: 480,
+              width: dialogWidth,
               child: Scrollbar(
                 thumbVisibility: true,
                 child: SingleChildScrollView(
@@ -177,18 +191,7 @@ class HomeScreenState extends State<HomeScreen>
                       if (snapshot.connectionState == ConnectionState.waiting)
                         Center(child: CircularProgressIndicator(strokeWidth: 2))
                       else if (changelog != null && changelog.trim().isNotEmpty)
-                        Container(
-                          constraints: BoxConstraints(
-                            maxHeight: 320,
-                            minHeight: 80,
-                          ),
-                          child: Scrollbar(
-                            thumbVisibility: true,
-                            child: SingleChildScrollView(
-                              child: MarkdownBody(data: changelog),
-                            ),
-                          ),
-                        )
+                        MarkdownBody(data: changelog)
                       else
                         Text(
                           "No changelog found for this version.",
@@ -264,7 +267,7 @@ class HomeScreenState extends State<HomeScreen>
               ),
               const SizedBox(height: 12),
               Text(
-                "The Fire Insurance Calculator is currently under construction. We're working hard to bring this feature to you soon!",
+                "The Health Insurance Calculator is currently under construction. We're working hard to bring this feature to you soon!",
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium,
               ),
@@ -286,6 +289,7 @@ class HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       drawer: Drawer(
         backgroundColor: Theme.of(context).colorScheme.surface,
         child: Column(
@@ -352,7 +356,10 @@ class HomeScreenState extends State<HomeScreen>
                   context,
                 ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
-              onTap: _checkForUpdate,
+              onTap: () {
+                Navigator.pop(context);
+                _checkForUpdate();
+              },
             ),
             ListTile(
               leading: Icon(
@@ -433,14 +440,16 @@ class HomeScreenState extends State<HomeScreen>
           padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 8.0),
           child: LayoutBuilder(
             builder: (context, constraints) {
+              final screenWidth = MediaQuery.of(context).size.width;
               final isWide = constraints.maxWidth > 600;
+              final isSmallScreen = screenWidth < 380;
               final crossAxisCount = isWide ? 3 : 2;
               return GridView.count(
                 padding: EdgeInsets.zero,
                 crossAxisCount: crossAxisCount,
                 crossAxisSpacing: 24,
-                mainAxisSpacing: 24,
-                childAspectRatio: 1.0, // Make cards perfect squares
+                mainAxisSpacing: isSmallScreen ? 16 : 24,
+                childAspectRatio: isSmallScreen ? 0.95 : 1.0,
                 physics: const BouncingScrollPhysics(),
                 children: [
                   CalculatorCard(
@@ -456,8 +465,8 @@ class HomeScreenState extends State<HomeScreen>
                     },
                   ),
                   CalculatorCard(
-                    title: 'Fire Insurance',
-                    icon: Icons.local_fire_department,
+                    title: 'Health Insurance',
+                    icon: Icons.favorite,
                     onTap: () {
                       _showComingSoonPopup(context);
                     },

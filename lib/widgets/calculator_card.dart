@@ -63,9 +63,10 @@ class _CalculatorCardState extends State<CalculatorCard> {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 decoration: BoxDecoration(
@@ -76,21 +77,23 @@ class _CalculatorCardState extends State<CalculatorCard> {
                     width: 1.5,
                   ),
                 ),
-                padding: const EdgeInsets.all(16),
-                child: Icon(widget.icon, size: 36, color: Colors.white),
+                padding: const EdgeInsets.all(14),
+                child: Icon(widget.icon, size: 32, color: Colors.white),
               ),
-              const SizedBox(height: 12),
-              Text(
-                widget.title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 15,
-                  letterSpacing: -0.2,
+              const SizedBox(height: 8),
+              Flexible(
+                child: Text(
+                  widget.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    letterSpacing: -0.2,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

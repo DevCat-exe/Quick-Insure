@@ -1,6 +1,6 @@
 # 🚗 Quick Insure
 
-**Quick Insure** is a modern, cross-platform **Flutter insurance calculator app** designed to help users accurately calculate insurance premiums with a clean UI, smooth animations, and offline-first performance.
+**Quick Insure** is a modern, Android **Flutter insurance calculator app** designed to help users accurately calculate insurance premiums with a clean UI, smooth animations, and offline-first performance.
 
 The app currently supports **Motor Insurance**
 
@@ -8,12 +8,12 @@ The app currently supports **Motor Insurance**
 
 ## 📸 Screenshots
 
-| Home (Light Mode) | Home (Dark Mode) |
-|------------------|-----------------|
+| Home (Light Mode)               | Home (Dark Mode)               |
+| ------------------------------- | ------------------------------ |
 | ![](screenshots/home_light.png) | ![](screenshots/home_dark.png) |
 
-| Motor Insurance Calculator | Calculation History |
-|----------------------------|---------------------|
+| Motor Insurance Calculator      | Calculation History          |
+| ------------------------------- | ---------------------------- |
 | ![](screenshots/motor_calc.png) | ![](screenshots/history.png) |
 
 ---
@@ -21,7 +21,7 @@ The app currently supports **Motor Insurance**
 ## 🚀 Download
 
 **Latest Release (v2.0.0)**  
-👉 [Download APK](https://github.com/DevCat-exe/Quick-Insure/releases/download/v2.0.0/Quick-Insure.apk)
+👉 [Download APK](https://github.com/DevCat-exe/Quick-Insure/releases/download/v2.0.1/Quick-Insure.apk)
 
 ---
 
@@ -43,13 +43,13 @@ The app currently supports **Motor Insurance**
 
 ## 🛠️ Tech Stack
 
-| Category | Technologies |
-|--------|--------------|
-| Framework | Flutter |
-| Language | Dart |
-| UI | Material Design, Custom Animations |
-| State | Local state management |
-| Platform | Android (APK), extensible to iOS & Desktop |
+| Category  | Technologies                               |
+| --------- | ------------------------------------------ |
+| Framework | Flutter                                    |
+| Language  | Dart                                       |
+| UI        | Material Design, Custom Animations         |
+| State     | Local state management                     |
+| Platform  | Android (APK), extensible to iOS & Desktop |
 
 ## 📦 Getting Started
 
@@ -62,17 +62,17 @@ flutter pub get
 
 # Run the app
 flutter run
-````
+```
 
 **Prerequisites**
 
-* Flutter SDK (stable)
-* Android Studio or VS Code
-* Android emulator or physical device
+- Flutter SDK (stable)
+- Android Studio or VS Code
+- Android emulator or physical device
 
 ---
 
 ## 🚧 Planned Features
 
-* 🔥 Fire Insurance Calculator
-* 🏥 Health Insurance Calculator
+- 🔥 Fire Insurance Calculator
+- 🏥 Health Insurance Calculator

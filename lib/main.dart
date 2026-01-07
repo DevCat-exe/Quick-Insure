@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'constants/styles.dart';
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 void main() {
   runApp(MotorInsuranceApp());
 }
@@ -27,9 +29,11 @@ class _MotorInsuranceAppState extends State<MotorInsuranceApp> {
     return MaterialApp(
       title: 'Quick Insure',
       theme: AppStyles.getTheme(dark: _darkMode),
+      scaffoldMessengerKey: scaffoldMessengerKey,
       home: HomeScreen(
         onToggleDarkMode: _toggleDarkMode,
         darkMode: _darkMode,
+        scaffoldMessengerKey: scaffoldMessengerKey,
       ),
       debugShowCheckedModeBanner: false,
     );

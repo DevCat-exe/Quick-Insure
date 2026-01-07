@@ -1,10 +1,10 @@
 name: quick_insure
-description: A insurance premium calculator app.
+description: An insurance premium calculator app.
 publish_to: "none"
-version: 2.0.0+1
+version: 2.0.1+1
 
 environment:
-  sdk: ^3.6.0
+  sdk: ">=3.6.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -18,10 +18,8 @@ dependencies:
   http: ^1.6.0
   package_info_plus: ^9.0.0
   url_launcher: ^6.1.11
-  fluttertoast: ^9.0.0
   github: ^9.13.0
-  flutter_statusbarcolor_ns: ^0.6.0
-  flutter_markdown: ^0.7.7+1
+  flutter_markdown_plus: ^1.0.7 # Replaces flutter_markdown
 
 dev_dependencies:
   flutter_test:
