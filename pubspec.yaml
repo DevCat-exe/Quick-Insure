@@ -1,7 +1,7 @@
 name: quick_insure
 description: An insurance premium calculator app.
 publish_to: "none"
-version: 2.0.1+1
+version: 2.0.1+2
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
