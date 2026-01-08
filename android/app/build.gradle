@@ -12,7 +12,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.devcat.quick_insure"
+    namespace = "com.devcat.quickinsure"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -34,7 +34,7 @@ android {
         }
     }
     defaultConfig {
-        applicationId = "com.example.quick_insure"
+        applicationId = "com.devcat.quickinsure"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
