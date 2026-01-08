@@ -1,4 +1,4 @@
-package com.example.quick_insure
+package com.devcat.quickinsure
 
 import io.flutter.embedding.android.FlutterActivity
 
