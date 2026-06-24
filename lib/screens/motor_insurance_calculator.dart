@@ -79,16 +79,34 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
       showDialog(
         context: context,
         builder: (context) => ResultPopup(
-          result['netPremium'],
-          result['vat'],
-          result['totalPremium'],
+          title: "Motor Insurance",
+          netPremium: result['netPremium'],
+          vat: result['vat'],
+          totalPremium: result['totalPremium'],
           insuredSum: insuredSum,
-          riskFactor: riskFactor,
-          discount: discount,
-          ncb: ncb,
-          passengers: passengers,
-          drivers: drivers,
-          engineCC: engineCC,
+          sections: [
+            ResultSection("Vehicle Information", {
+              "Engine Capacity": "$engineCC cc",
+              "Passengers": "$passengers",
+              "Drivers": "$drivers",
+              "Seating Capacity": "${passengers + drivers}",
+            }),
+            ResultSection("Risk & Discounts", {
+              "Risk Factor": "$riskFactor",
+              "Discount": "$discount%",
+              "NCB": "$ncb%",
+            }),
+          ],
+          exportDetails: {
+            'Insured Sum': "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
+            'Engine CC': "$engineCC cc",
+            'Seating Capacity': "${passengers + drivers}",
+            'Risk Factor': "$riskFactor",
+            'Discount': "$discount%",
+            'NCB': "$ncb%",
+            'Net Premium': "BDT ${NumberFormat("#,##0", "en_US").format(result['netPremium'])}",
+            'VAT (15%)': "BDT ${NumberFormat("#,##0", "en_US").format(result['vat'])}",
+          },
         ),
       );
     } catch (e) {
