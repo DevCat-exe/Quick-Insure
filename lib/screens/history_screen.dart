@@ -18,17 +18,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return double.tryParse(value.replaceAll('BDT', '').replaceAll(',', '').trim()) ?? 0;
   }
 
-  int _parseCC(String value) {
-    return int.tryParse(value.replaceAll('cc', '').trim()) ?? 0;
-  }
-
-  double _parsePercentage(String value) {
-    return double.tryParse(value.replaceAll('%', '').trim()) ?? 0;
-  }
-
-  int _parseSeatingCapacity(String value) {
-    return int.tryParse(value.trim()) ?? 0;
-  }
 
   @override
   void initState() {

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class CustomDropdown extends StatelessWidget {
   final String value;
   final List<String> items;
-  final Function(String?) onChanged;
+  final Function(String?)? onChanged;
   final String labelText;
   final IconData icon;
 

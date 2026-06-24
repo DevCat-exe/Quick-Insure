@@ -4,6 +4,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../services/update_checker.dart';
 import '../screens/motor_insurance_calculator.dart';
+import '../screens/fire_insurance_calculator.dart';
 import '../widgets/calculator_card.dart';
 import '../screens/history_screen.dart';
 
@@ -223,6 +224,7 @@ class HomeScreenState extends State<HomeScreen>
     return await _updateChecker.fetchChangelogForVersion(currentVersion);
   }
 
+  // ignore: unused_element - Kept for future use with other calculator types
   void _showComingSoonPopup(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -465,10 +467,15 @@ class HomeScreenState extends State<HomeScreen>
                     },
                   ),
                   CalculatorCard(
-                    title: 'Health Insurance',
-                    icon: Icons.favorite,
+                    title: 'Fire Insurance',
+                    icon: Icons.local_fire_department,
                     onTap: () {
-                      _showComingSoonPopup(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FireInsuranceCalculator(),
+                        ),
+                      );
                     },
                   ),
                 ],
