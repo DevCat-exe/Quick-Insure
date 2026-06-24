@@ -44,33 +44,47 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   void _showHistoryItemPopup(CalculationHistoryItem item) {
     final details = item.details;
+    final insuredSum = _parseBDT(details['Insured Sum']?.toString() ?? '0');
+    final netPremium = _parseBDT(details['Net Premium']?.toString() ?? '0');
+    final vat = _parseBDT(details['VAT (15%)']?.toString() ?? '0');
     
-    final netPremium = _parseBDT(details['Net Premium'] ?? '0');
-    final vat = _parseBDT(details['VAT (15%)'] ?? '0');
-    final insuredSum = _parseBDT(details['Insured Sum'] ?? '0');
-    final riskFactor = double.tryParse(details['Risk Factor']?.toString() ?? '0') ?? 0;
-    final discount = _parsePercentage(details['Discount'] ?? '0');
-    final ncb = _parsePercentage(details['NCB'] ?? '0');
-    final engineCC = _parseCC(details['Engine CC'] ?? '0');
-    int seatingCapacity = _parseSeatingCapacity(details['Seating Capacity'] ?? '0');
-    if (seatingCapacity < 1) seatingCapacity = 1;
+    List<ResultSection> sections = [];
+    
+    if (item.type == 'Motor Insurance') {
+      sections = [
+        ResultSection("Vehicle Details", {
+          "Engine CC": details['Engine CC']?.toString() ?? '',
+          "Seating Capacity": details['Seating Capacity']?.toString() ?? '',
+        }),
+        ResultSection("Risk & Discounts", {
+          "Risk Factor": details['Risk Factor']?.toString() ?? '',
+          "Discount": details['Discount']?.toString() ?? '',
+          "NCB": details['NCB']?.toString() ?? '',
+        }),
+      ];
+    } else if (item.type == 'Fire Insurance') {
+      sections = [
+        ResultSection("Property Details", {
+          "Zone": details['Zone']?.toString() ?? '',
+          "Selected Risks": details['Selected Risks']?.toString() ?? '',
+        }),
+      ];
+    } else {
+      sections = [
+        ResultSection("Details", details.map((k, v) => MapEntry(k, v.toString()))),
+      ];
+    }
 
-    final drivers = 1;
-    final passengers = seatingCapacity - drivers > 0 ? seatingCapacity - drivers : 0;
-    
     showDialog(
       context: context,
       builder: (context) => ResultPopup(
-        netPremium,
-        vat,
-        item.totalPremium,
+        title: item.type,
+        netPremium: netPremium,
+        vat: vat,
+        totalPremium: item.totalPremium,
         insuredSum: insuredSum,
-        riskFactor: riskFactor,
-        discount: discount,
-        ncb: ncb,
-        passengers: passengers,
-        drivers: drivers,
-        engineCC: engineCC,
+        sections: sections,
+        exportDetails: details,
       ),
     );
   }
