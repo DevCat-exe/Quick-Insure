@@ -2,30 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/export_service.dart';
 
+class ResultSection {
+  final String title;
+  final Map<String, String> items;
+
+  const ResultSection(this.title, this.items);
+}
+
 class ResultPopup extends StatelessWidget {
+  final String title;
   final double netPremium;
   final double vat;
   final double totalPremium;
   final double insuredSum;
-  final double riskFactor;
-  final double discount;
-  final double ncb;
-  final int passengers;
-  final int drivers;
-  final int engineCC;
+  final List<ResultSection> sections;
+  final Map<String, dynamic> exportDetails;
 
-  const ResultPopup(
-    this.netPremium,
-    this.vat,
-    this.totalPremium, {
+  const ResultPopup({
     super.key,
+    required this.title,
+    required this.netPremium,
+    required this.vat,
+    required this.totalPremium,
     required this.insuredSum,
-    required this.riskFactor,
-    required this.discount,
-    required this.ncb,
-    required this.passengers,
-    required this.drivers,
-    required this.engineCC,
+    required this.sections,
+    required this.exportDetails,
   });
 
   @override
@@ -101,115 +102,101 @@ class ResultPopup extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                       _buildSectionHeader(theme, "Vehicle Information"),
-                      SizedBox(height: isSmallScreen ? 8 : 12),
-                      _buildResultRow("Engine CC:", "$engineCC cc", theme, isSmallScreen: isSmallScreen),
-                      _buildResultRow("Passengers:", "$passengers", theme, isSmallScreen: isSmallScreen),
-                      _buildResultRow("Drivers:", "$drivers", theme, isSmallScreen: isSmallScreen),
-                      _buildResultRow("Seating Capacity:", "${passengers + drivers}", theme, isSmallScreen: isSmallScreen),
-                      SizedBox(height: isSmallScreen ? 16 : 24),
-                      _buildSectionHeader(theme, "Risk & Discounts"),
-                      SizedBox(height: isSmallScreen ? 8 : 12),
-                       _buildResultRow("Risk Factor:", "$riskFactor", theme, isSmallScreen: isSmallScreen),
-                       _buildResultRow("Discount:", "$discount%", theme, isSmallScreen: isSmallScreen),
-                       _buildResultRow("NCB:", "$ncb%", theme, isSmallScreen: isSmallScreen),
-                       SizedBox(height: isSmallScreen ? 16 : 24),
-                        Divider(color: theme.dividerColor.withAlpha(40)),
+                      for (var section in sections) ...[
+                        _buildSectionHeader(theme, section.title),
+                        SizedBox(height: isSmallScreen ? 8 : 12),
+                        for (var item in section.items.entries)
+                          if (item.value.isNotEmpty)
+                            _buildResultRow(item.key, item.value, theme, isSmallScreen: isSmallScreen),
                         SizedBox(height: isSmallScreen ? 16 : 24),
-                        _buildPremiumRow(
-                            "Insured Sum",
-                            "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
-                            theme,
-                            isBold: false,
-                            isSmallScreen: isSmallScreen),
-                        _buildPremiumRow(
-                            "Net Premium",
-                            "BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}",
-                            theme,
-                            isBold: false,
-                            isSmallScreen: isSmallScreen),
-                        _buildPremiumRow(
-                            "VAT (15%)",
-                            "BDT ${NumberFormat("#,##0", "en_US").format(vat)}",
-                            theme,
-                            isBold: false,
-                            isSmallScreen: isSmallScreen),
-                       const SizedBox(height: 12),
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.symmetric(
-                              vertical: isSmallScreen ? 12 : 16, 
-                              horizontal: isSmallScreen ? 14 : 20),
-                          decoration: BoxDecoration(
-                            color: accent.withAlpha(15),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: accent.withAlpha(40)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Total Premium",
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontSize: isSmallScreen ? 14 : 16,
-                                  fontWeight: FontWeight.w900,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                "BDT ${NumberFormat("#,##0", "en_US").format(totalPremium)}",
-                                style: TextStyle(
-                                  fontSize: isMediumScreen ? 18 : 22,
-                                  fontWeight: FontWeight.w900,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            ],
-                          ),
+                      ],
+                      Divider(color: theme.dividerColor.withAlpha(40)),
+                      SizedBox(height: isSmallScreen ? 16 : 24),
+                      _buildPremiumRow(
+                          "Insured Sum",
+                          "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
+                          theme,
+                          isBold: false,
+                          isSmallScreen: isSmallScreen),
+                      _buildPremiumRow(
+                          "Net Premium",
+                          "BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}",
+                          theme,
+                          isBold: false,
+                          isSmallScreen: isSmallScreen),
+                      _buildPremiumRow(
+                          "VAT (15%)",
+                          "BDT ${NumberFormat("#,##0", "en_US").format(vat)}",
+                          theme,
+                          isBold: false,
+                          isSmallScreen: isSmallScreen),
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(
+                            vertical: isSmallScreen ? 12 : 16, 
+                            horizontal: isSmallScreen ? 14 : 20),
+                        decoration: BoxDecoration(
+                          color: accent.withAlpha(15),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: accent.withAlpha(40)),
                         ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Total Premium",
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontSize: isSmallScreen ? 14 : 16,
+                                fontWeight: FontWeight.w900,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              "BDT ${NumberFormat("#,##0", "en_US").format(totalPremium)}",
+                              style: TextStyle(
+                                fontSize: isMediumScreen ? 18 : 22,
+                                fontWeight: FontWeight.w900,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       SizedBox(height: isSmallScreen ? 20 : 32),
                       Row(
-                         children: [
-                           Expanded(
-                             child: OutlinedButton.icon(
-                               label: const Text("Export PDF"),
-                               icon: const Icon(Icons.picture_as_pdf, size: 18),
-                               style: OutlinedButton.styleFrom(
-                                 padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 14 : 20),
-                                 side: BorderSide(
-                                     color: theme.colorScheme.primary),
-                                 shape: RoundedRectangleBorder(
-                                   borderRadius: BorderRadius.circular(16),
-                                 ),
-                               ),
-                               onPressed: () => ExportService.exportToPdf(
-                                 title: "Motor Insurance",
-                                 totalPremium: totalPremium,
-                                 details: {
-                                   "Insured Sum": "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
-                                   "Engine CC": "$engineCC cc",
-                                   "Seating Capacity": "${passengers + drivers}",
-                                   "Risk Factor": "$riskFactor",
-                                   "Discount": "$discount%",
-                                   "NCB": "$ncb%",
-                                   "Net Premium": "BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}",
-                                   "VAT (15%)": "BDT ${NumberFormat("#,##0", "en_US").format(vat)}",
-                                 },
-                               ),
-                             ),
-                           ),
-                           const SizedBox(width: 12),
-                           Expanded(
-                             child: ElevatedButton(
-                               style: ElevatedButton.styleFrom(
-                                 padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 14 : 20),
-                               ),
-                               onPressed: () => Navigator.pop(context),
-                               child: const Text("Done"),
-                             ),
-                           ),
-                         ],
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              label: const Text("Export PDF"),
+                              icon: const Icon(Icons.picture_as_pdf, size: 18),
+                              style: OutlinedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 14 : 20),
+                                side: BorderSide(
+                                    color: theme.colorScheme.primary),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              onPressed: () => ExportService.exportToPdf(
+                                title: title,
+                                totalPremium: totalPremium,
+                                details: exportDetails,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 14 : 20),
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text("Done"),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
