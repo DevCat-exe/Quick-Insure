@@ -2,7 +2,7 @@
 
 **Quick Insure** is a modern, Android **Flutter insurance calculator app** designed to help users accurately calculate insurance premiums with a clean UI, smooth animations, and offline-first performance.
 
-The app currently supports **Motor Insurance**
+The app currently supports **Motor Insurance** and **Fire Insurance**
 
 ---
 
@@ -12,16 +12,16 @@ The app currently supports **Motor Insurance**
 | ------------------------------- | ------------------------------ |
 | ![](screenshots/home_light.png) | ![](screenshots/home_dark.png) |
 
-| Motor Insurance Calculator      | Calculation History          |
-| ------------------------------- | ---------------------------- |
-| ![](screenshots/motor_calc.png) | ![](screenshots/history.png) |
+| Motor Insurance Calculator      | Fire Insurance Calculator        | Calculation History          |
+| ------------------------------- | ------------------------------- | ---------------------------- |
+| ![](screenshots/motor_calc.png) | ![](screenshots/fire_calc.png) | ![](screenshots/history.png) |
 
 ---
 
 ## 🚀 Download
 
-**Latest Release (v2.0.0)**  
-👉 [Download APK](https://github.com/DevCat-exe/Quick-Insure/releases/download/v2.0.1/Quick-Insure.apk)
+**Latest Release (v2.1.0)**  
+👉 [Download APK](https://github.com/DevCat-exe/Quick-Insure/releases/download/v2.1.0/Quick-Insure.apk)
 
 ---
 
@@ -29,6 +29,10 @@ The app currently supports **Motor Insurance**
 
 - 🚘 **Motor Insurance Calculator**  
   Calculate premiums with accurate breakdowns and instant results
+
+- 🔥 **Fire Insurance Calculator**  
+  Zone-based property insurance with multiple risk options (Fire, Earthquake, Cyclone, Flood)
+  and individual premium breakdowns
 
 - 📜 **Calculation History**  
   Automatically saves previous calculations for quick reference
@@ -74,5 +78,4 @@ flutter run
 
 ## 🚧 Planned Features
 
-- 🔥 Fire Insurance Calculator
 - 🏥 Health Insurance Calculator
