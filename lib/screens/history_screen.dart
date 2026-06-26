@@ -51,13 +51,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
           "NCB": details['NCB']?.toString() ?? '',
         }),
       ];
-    } else if (item.type == 'Fire Insurance') {
-      sections = [
-        ResultSection("Property Details", {
-          "Zone": details['Zone']?.toString() ?? '',
-          "Selected Risks": details['Selected Risks']?.toString() ?? '',
-        }),
-      ];
+} else if (item.type == 'Fire Insurance') {
+       final zone = details['Zone']?.toString() ?? '';
+       final risksStr = details['Selected Risks']?.toString() ?? '';
+       final riskEntries = <String, String>{};
+       for (final part in risksStr.split(', ')) {
+         final match = RegExp(r'^(.+?) \((\d+\.?\d*)% - BDT (.+?\d)\)$').firstMatch(part);
+         if (match != null) {
+           riskEntries[match.group(1)!] = "${match.group(2)}% (BDT ${match.group(3)})";
+         }
+       }
+       sections = [
+         ResultSection("Property Details", {
+           "Zone": zone,
+         }),
+         if (riskEntries.isNotEmpty)
+           ResultSection("Selected Risks", riskEntries),
+       ];
     } else {
       sections = [
         ResultSection("Details", details.map((k, v) => MapEntry(k, v.toString()))),

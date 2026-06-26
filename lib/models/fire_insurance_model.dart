@@ -26,22 +26,32 @@ class FireInsuranceModel {
     required List<String> selectedRisks,
   }) {
     double totalRate = 0.0;
+    double totalPremium = 0.0;
+    double vat = 0.0;
+    double netPremium = 0.0;
+
     final zoneRates = ratesTable[zone];
+    final Map<String, double> riskPremiums = {};
+
     if (zoneRates != null) {
       for (var risk in selectedRisks) {
-        totalRate += zoneRates[risk] ?? 0.0;
+        final rate = zoneRates[risk] ?? 0.0;
+        totalRate += rate;
+        final premium = insuredSum * (rate / 100);
+        riskPremiums[risk] = premium;
       }
     }
 
-    double netPremium = insuredSum * (totalRate / 100);
-    double vat = netPremium * 0.15;
-    double totalPremium = netPremium + vat;
+    netPremium = insuredSum * (totalRate / 100);
+    vat = netPremium * 0.15;
+    totalPremium = netPremium + vat;
 
     return {
       'totalRate': totalRate,
       'netPremium': netPremium,
       'vat': vat,
       'totalPremium': totalPremium,
+      'riskPremiums': riskPremiums,
     };
   }
 }
