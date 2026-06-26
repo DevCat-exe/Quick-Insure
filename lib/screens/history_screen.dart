@@ -39,7 +39,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     
     List<ResultSection> sections = [];
     
-    if (item.type == 'Motor Insurance') {
+if (item.type == 'Motor Insurance') {
       sections = [
         ResultSection("Vehicle Details", {
           "Engine CC": details['Engine CC']?.toString() ?? '',
@@ -51,23 +51,34 @@ class _HistoryScreenState extends State<HistoryScreen> {
           "NCB": details['NCB']?.toString() ?? '',
         }),
       ];
-} else if (item.type == 'Fire Insurance') {
-       final zone = details['Zone']?.toString() ?? '';
-       final risksStr = details['Selected Risks']?.toString() ?? '';
-       final riskEntries = <String, String>{};
-       for (final part in risksStr.split(', ')) {
-         final match = RegExp(r'^(.+?) \((\d+\.?\d*)% - BDT (.+?\d)\)$').firstMatch(part);
-         if (match != null) {
-           riskEntries[match.group(1)!] = "${match.group(2)}% (BDT ${match.group(3)})";
-         }
-       }
-       sections = [
-         ResultSection("Property Details", {
-           "Zone": zone,
-         }),
-         if (riskEntries.isNotEmpty)
-           ResultSection("Selected Risks", riskEntries),
-       ];
+    } else if (item.type == 'Fire Insurance') {
+      final zone = details['Zone']?.toString() ?? '';
+      final totalRate = details['Total Rate']?.toString() ?? '';
+      final risksStr = details['Selected Risks']?.toString() ?? '';
+      final riskEntries = <String, String>{};
+      for (final part in risksStr.split(', ')) {
+        final trimmed = part.trim();
+        if (trimmed.contains(' - BDT ')) {
+          final rateMatch = RegExp(r'^(.+?)\s*\(([\d.]+%)\)\s*-\s*BDT\s*(.+)$').firstMatch(trimmed);
+          if (rateMatch != null) {
+            final riskName = rateMatch.group(1)!.trim();
+            final rate = rateMatch.group(2)!;
+            final premium = rateMatch.group(3)!;
+            riskEntries[riskName] = '$rate (BDT $premium)';
+          }
+        }
+      }
+      sections = [
+        ResultSection("Property Details", {
+          "Zone": zone,
+        }),
+        if (riskEntries.isNotEmpty)
+          ResultSection("Selected Risks", riskEntries),
+        if (totalRate.isNotEmpty)
+          ResultSection("Summary", {
+            "Total Rate": totalRate,
+          }),
+      ];
     } else {
       sections = [
         ResultSection("Details", details.map((k, v) => MapEntry(k, v.toString()))),
