@@ -21,7 +21,7 @@ The app currently supports **Motor Insurance** and **Fire Insurance**
 ## 🚀 Download
 
 **Latest Release (v2.1.0)**  
-👉 [Download APK](https://github.com/DevCat-exe/Quick-Insure/releases/download/v2.1.0/Quick-Insure.apk)
+👉 [Download APK](https://github.com/DevCat-exe/Quick-Insure/releases/download/v2.1.0/quickinsure_2.1.0.apk)
 
 ---
 
