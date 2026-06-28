@@ -1,15 +1,20 @@
 # Changelog
 
-# v2.1.0
+## [2.1.1] - 2026-06-28
+
+### Fixed
+- 🔥 **Fire Insurance** - Corrected Sylhet earthquake rate from 0.03% to 0.3%
+- 📱 **About Dialog** - Fixed changelog display and responsive constraints  
+- 🔄 **Update Checker** - Fixed changelog fetching from latest GitHub release
+
+## [2.1.0] - 2026-06-27
 
 ### Added
-
 - 🔥 **Fire Insurance Calculator** - New calculator for property insurance with zone-based risk rates
 - Checkbox-based risk selection UI for Fire Insurance (Fire, Earthquake, Cyclone, Flood)
 - Individual risk premium breakdown in calculation results and PDF export
 
 ### Changed
-
 - Improved result popup to display individual risk premiums per risk type
 - Enhanced history screen to properly parse and display Fire Insurance risk breakdowns
 - Better responsive UI with optimized layouts
