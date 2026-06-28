@@ -101,6 +101,7 @@ class HomeScreenState extends State<HomeScreen>
 
   void _openAboutDialog(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
     final dialogWidth = screenWidth > 600 ? 500.0 : screenWidth * 0.95;
     
     showDialog(
@@ -113,63 +114,52 @@ class HomeScreenState extends State<HomeScreen>
           final theme = Theme.of(context);
           if (snapshot.hasError) {
             return AlertDialog(
-              title: Text("About Quick Insure"),
-              content: SizedBox(
-                width: dialogWidth,
-                child: Scrollbar(
-                  thumbVisibility: true,
-                  child: SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: 120,
+              title: const Text("About Quick Insure"),
+              content: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: dialogWidth, minHeight: 120),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Version: $_appVersion"),
+                      const SizedBox(height: 10),
+                      const Text("Quick Insure is your trusted insurance partner."),
+                      const SizedBox(height: 18),
+                      Text(
+                        "Changelog:",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Version: $_appVersion"),
-                          SizedBox(height: 10),
-                          Text(
-                            "Quick Insure is your trusted insurance partner.",
-                          ),
-                          SizedBox(height: 18),
-                          Text(
-                            "Changelog:",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                          SizedBox(height: 6),
-                          Text(
-                            "Error loading changelog: ",
-                            style: TextStyle(color: theme.colorScheme.error),
-                          ),
-                          Text(
-                            snapshot.error.toString(),
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: theme.colorScheme.error,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 6),
+                      Text(
+                        "Error loading changelog: ${snapshot.error}",
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: theme.colorScheme.error,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text("Close"),
+                  child: const Text("Close"),
                 ),
               ],
             );
           }
           return AlertDialog(
-            title: Text("About Quick Insure"),
-            content: SizedBox(
-              width: dialogWidth,
+            title: const Text("About Quick Insure"),
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: dialogWidth,
+                maxHeight: screenHeight * 0.5,
+              ),
               child: Scrollbar(
                 thumbVisibility: true,
                 child: SingleChildScrollView(
@@ -178,9 +168,9 @@ class HomeScreenState extends State<HomeScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("Version: $_appVersion"),
-                      SizedBox(height: 10),
-                      Text("Quick Insure is your trusted insurance partner."),
-                      SizedBox(height: 18),
+                      const SizedBox(height: 10),
+                      const Text("Quick Insure is your trusted insurance partner."),
+                      const SizedBox(height: 18),
                       Text(
                         "Changelog:",
                         style: TextStyle(
@@ -188,11 +178,20 @@ class HomeScreenState extends State<HomeScreen>
                           color: theme.colorScheme.primary,
                         ),
                       ),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       if (snapshot.connectionState == ConnectionState.waiting)
-                        Center(child: CircularProgressIndicator(strokeWidth: 2))
+                        const Center(child: CircularProgressIndicator(strokeWidth: 2))
                       else if (changelog != null && changelog.trim().isNotEmpty)
-                        MarkdownBody(data: changelog)
+                        MarkdownBody(
+                          data: changelog,
+                          styleSheet: MarkdownStyleSheet(
+                            p: TextStyle(fontSize: 13),
+                            h2: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        )
                       else
                         Text(
                           "No changelog found for this version.",
@@ -209,7 +208,7 @@ class HomeScreenState extends State<HomeScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Close"),
+                child: const Text("Close"),
               ),
             ],
           );
@@ -312,7 +311,7 @@ class HomeScreenState extends State<HomeScreen>
                   BoxShadow(
                     color: Theme.of(context).colorScheme.primary.withAlpha(40),
                     blurRadius: 12,
-                    offset: Offset(0, 6),
+                    offset: const Offset(0, 6),
                   ),
                 ],
                 borderRadius: const BorderRadius.only(
@@ -336,7 +335,6 @@ class HomeScreenState extends State<HomeScreen>
                           color: Colors.white,
                         ),
                       ),
-                      SizedBox(height: 4),
                       Text(
                         'v$_appVersion',
                         style: TextStyle(fontSize: 14, color: Colors.white70),

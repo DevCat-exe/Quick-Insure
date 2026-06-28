@@ -227,15 +227,14 @@ class UpdateChecker {
 
   Future<String?> fetchChangelogForVersion(String version) async {
     try {
-      final response = await http
-          .get(Uri.parse("https://api.github.com/repos/$githubRepo/releases"));
+      final response = await http.get(Uri.parse(
+          "https://api.github.com/repos/$githubRepo/releases/latest"));
       if (response.statusCode == 200) {
-        final List<dynamic> releases = jsonDecode(response.body);
-        for (final release in releases) {
-          final tag = (release["tag_name"] as String?)?.replaceAll("v", "");
-          if (tag == version) {
-            return release["body"] as String?;
-          }
+        final data = jsonDecode(response.body);
+        final tag = (data["tag_name"] as String?)?.replaceAll("v", "") ?? "";
+        final cleanVersion = version.split("+").first;
+        if (tag == cleanVersion) {
+          return data["body"] as String?;
         }
       }
     } catch (e) {

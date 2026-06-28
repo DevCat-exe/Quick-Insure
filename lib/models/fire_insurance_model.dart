@@ -14,7 +14,7 @@ class FireInsuranceModel {
     },
     'Sylhet': {
       'Fire': 0.08,
-      'Earthquake': 0.03,
+      'Earthquake': 0.3,
       'Cyclone': 0.06,
       'Flood': 0.13,
     },
