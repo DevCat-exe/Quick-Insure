@@ -223,7 +223,6 @@ class HomeScreenState extends State<HomeScreen>
     return await _updateChecker.fetchChangelogForVersion(currentVersion);
   }
 
-  // ignore: unused_element - Kept for future use with other calculator types
   void _showComingSoonPopup(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -268,7 +267,7 @@ class HomeScreenState extends State<HomeScreen>
               ),
               const SizedBox(height: 12),
               Text(
-                "The Health Insurance Calculator is currently under construction. We're working hard to bring this feature to you soon!",
+                "The Overseas Mediclaim Calculator is currently under construction. We're working hard to bring this feature to you soon!",
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium,
               ),
@@ -413,7 +412,7 @@ class HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.only(bottom: 18.0),
               child: Center(
                 child: Text(
-                  '© 2025 Quick Insure',
+                  '© 2026 Quick Insure',
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: Colors.grey[500]),
@@ -475,6 +474,11 @@ class HomeScreenState extends State<HomeScreen>
                         ),
                       );
                     },
+                  ),
+                  CalculatorCard(
+                    title: 'Overseas Mediclaim',
+                    icon: Icons.health_and_safety,
+                    onTap: () => _showComingSoonPopup(context),
                   ),
                 ],
               );

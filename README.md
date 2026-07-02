@@ -20,8 +20,8 @@ The app currently supports **Motor Insurance** and **Fire Insurance**
 
 ## 🚀 Download
 
-**Latest Release (v2.1.1)**  
-👉 [Download APK](https://github.com/DevCat-exe/Quick-Insure/releases/download/v2.1.1/quickinsure_2.1.1.apk)
+**Latest Release (v2.1.2)**  
+👉 [Download APK](https://github.com/DevCat-exe/Quick-Insure/releases/download/v2.1.2/quickinsure_2.1.2.apk)
 
 ---
 
@@ -78,4 +78,4 @@ flutter run
 
 ## 🚧 Planned Features
 
-- 🏥 Health Insurance Calculator
+- 🏥 Overseas Mediclaim Calculator

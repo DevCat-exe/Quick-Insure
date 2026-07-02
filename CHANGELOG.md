@@ -1,11 +1,22 @@
 # Changelog
 
+## [2.1.2] - 2026-07-02
+
+### Added
+- ⚙️ **Publishing** - Configured production release signing keys and verified Google Play Store readiness
+
+### Changed
+- 📝 **Copyright** - Updated copyright year in About dialog and drawer to 2026
+
 ## [2.1.1] - 2026-06-28
 
 ### Fixed
 - 🔥 **Fire Insurance** - Corrected Sylhet earthquake rate from 0.03% to 0.3%
 - 📱 **About Dialog** - Fixed changelog display and responsive constraints  
 - 🔄 **Update Checker** - Fixed changelog fetching from latest GitHub release
+
+### Added
+- 🏥 **Home Screen** - Added Overseas Mediclaim card (Coming Soon)
 
 ## [2.1.0] - 2026-06-27
 
