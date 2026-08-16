@@ -1,4 +1,4 @@
-# 🚗 Quick Insure
+# Quick Insure
 
 **Quick Insure** is a modern, Android **Flutter insurance calculator app** designed to help users accurately calculate insurance premiums with a clean UI, smooth animations, and offline-first performance.
 
@@ -6,7 +6,7 @@ The app currently supports **Motor Insurance** and **Fire Insurance**
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 | Home (Light Mode)               | Home (Dark Mode)               |
 | ------------------------------- | ------------------------------ |
@@ -21,31 +21,31 @@ The app currently supports **Motor Insurance** and **Fire Insurance**
 ## 🚀 Download
 
 **Latest Release (v2.1.2)**  
-👉 [Download APK](https://github.com/DevCat-exe/Quick-Insure/releases/download/v2.1.2/quickinsure_2.1.2.apk)
+[Download APK](https://github.com/DevCat-exe/Quick-Insure/releases/download/v2.1.2/quickinsure_2.1.2.apk)
 
 ---
 
 ## ✨ Features
 
-- 🚘 **Motor Insurance Calculator**  
+- **Motor Insurance Calculator**  
   Calculate premiums with accurate breakdowns and instant results
 
-- 🔥 **Fire Insurance Calculator**  
+- **Fire Insurance Calculator**  
   Zone-based property insurance with multiple risk options (Fire, Earthquake, Cyclone, Flood)
   and individual premium breakdowns
 
-- 📜 **Calculation History**  
+- **Calculation History**  
   Automatically saves previous calculations for quick reference
 
-- 🌗 **Light & Dark Mode**  
+- **Light & Dark Mode**  
   Seamless theme switching with a polished UI
 
-- 🎯 **Clean UX**  
+- **Clean UX**  
   Minimal design, smooth transitions, and intuitive navigation
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Category  | Technologies                               |
 | --------- | ------------------------------------------ |
@@ -76,6 +76,6 @@ flutter run
 
 ---
 
-## 🚧 Planned Features
+## Planned Features
 
 - 🏥 Overseas Mediclaim Calculator
