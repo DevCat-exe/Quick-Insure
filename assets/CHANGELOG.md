@@ -1,31 +1,63 @@
 # Changelog
 
+## [2.2.0] - 2026-09-29
+
+**Desktop & Mobile Overhaul**
+
+### New Features
+
+- **Desktop workbench:** Dedicated calculator navigation, live premium summaries, and quick presets.
+- **Calculation actions:** Copy summaries and save calculations to history from the desktop view.
+- **Mobile navigation:** Direct access to Home, History, and Settings from the bottom bar.
+- **History tools:** Search and filter records; swipe to delete on mobile.
+- **Saved preferences:** Light and dark mode now persists between launches.
+
+### Fixed
+
+- **Platform-aware updates:** Desktop and web users are sent to the GitHub release; Android downloads the APK when available.
+- **History deletion:** Deletion now targets the selected record, including while a filter is active.
+- **Desktop startup:** Windows now opens at a defined size with a minimum window size.
+
+### Availability
+
+- Overseas Mediclaim remains unavailable until verified tariff data is available.
+
 ## [2.1.2] - 2026-07-02
 
 ### Added
+
 - ⚙️ **Publishing** - Configured production release signing keys and verified Google Play Store readiness
 
 ### Changed
+
 - 📝 **Copyright** - Updated copyright year in About dialog and drawer to 2026
+
+### Added
+
+- 🏥 **Home Screen** - Added Overseas Mediclaim card (Coming Soon)
+
+### Fixed
+
+- 🔄 **Update Checker** - Fixed bottom layout overflow on small screens by making the changelog view scrollable
 
 ## [2.1.1] - 2026-06-28
 
 ### Fixed
-- 🔥 **Fire Insurance** - Corrected Sylhet earthquake rate from 0.03% to 0.3%
-- 📱 **About Dialog** - Fixed changelog display and responsive constraints  
-- 🔄 **Update Checker** - Fixed changelog fetching from latest GitHub release
 
-### Added
-- 🏥 **Home Screen** - Added Overseas Mediclaim card (Coming Soon)
+- 🔥 **Fire Insurance** - Corrected Sylhet earthquake rate from 0.03% to 0.3%
+- 📱 **About Dialog** - Fixed changelog display and responsive constraints
+- 🔄 **Update Checker** - Fixed changelog fetching from latest GitHub release
 
 ## [2.1.0] - 2026-06-27
 
 ### Added
+
 - 🔥 **Fire Insurance Calculator** - New calculator for property insurance with zone-based risk rates
 - Checkbox-based risk selection UI for Fire Insurance (Fire, Earthquake, Cyclone, Flood)
 - Individual risk premium breakdown in calculation results and PDF export
 
 ### Changed
+
 - Improved result popup to display individual risk premiums per risk type
 - Enhanced history screen to properly parse and display Fire Insurance risk breakdowns
 - Better responsive UI with optimized layouts
