@@ -16,7 +16,7 @@
 
 - **Platform-aware updates:** Desktop and web users are sent to the GitHub release; Android downloads the APK when available.
 - **History deletion:** Deletion now targets the selected record, including while a filter is active.
-- **Desktop startup:** Windows now opens at a defined size with a minimum window size.
+- **Desktop startup:** Desktop apps open at a defined size with a minimum window size.
 
 ### Availability
 
