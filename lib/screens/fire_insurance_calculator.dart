@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/fire_insurance_model.dart';
+import '../models/calculator_registry.dart';
 import '../widgets/result_popup.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_dropdown.dart';
+import '../widgets/desktop_calculation_summary_card.dart';
 import '../services/history_service.dart';
 import '../main.dart';
 
 class FireInsuranceCalculator extends StatefulWidget {
-  const FireInsuranceCalculator({super.key});
+  final bool isEmbeddedInDesktop;
+  const FireInsuranceCalculator({super.key, this.isEmbeddedInDesktop = false});
 
   @override
   State<FireInsuranceCalculator> createState() =>
@@ -18,9 +21,12 @@ class FireInsuranceCalculator extends StatefulWidget {
 }
 
 class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
-  final TextEditingController _sumController = TextEditingController();
-  String? _selectedZone;
-  final Map<String, bool> _selectedRisksMap = {};
+  final TextEditingController _sumController = TextEditingController(text: "20000000");
+  String? _selectedZone = 'Dhaka';
+  final Map<String, bool> _selectedRisksMap = {
+    'Fire': true,
+    'Earthquake': true,
+  };
 
   static const List<String> _zones = ['Dhaka', 'Chittagong', 'Sylhet'];
   static const List<String> _allRisks = [
@@ -30,8 +36,17 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
     'Flood'
   ];
 
+  Map<String, dynamic>? _currentResult;
+  double _currentInsuredSum = 20000000;
+
+  @override
+  void initState() {
+    super.initState();
+    _recalculateLive();
+  }
+
   bool get _isFormValid =>
-      _sumController.text.isNotEmpty &&
+      _sumController.text.trim().isNotEmpty &&
       _selectedZone != null &&
       _selectedRisksMap.values.any((selected) => selected);
 
@@ -43,38 +58,111 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
     return FireInsuranceModel.ratesTable[_selectedZone]?[risk] ?? 0.0;
   }
 
-  void _calculatePremium() async {
+  void _applyPreset(CalculatorPreset preset) {
+    setState(() {
+      _sumController.text = preset.values['sum'] ?? '';
+      _selectedZone = preset.values['zone'];
+      _selectedRisksMap.clear();
+      final List<dynamic> risks = preset.values['risks'] ?? [];
+      for (final r in _allRisks) {
+        _selectedRisksMap[r] = risks.contains(r);
+      }
+    });
+    _recalculateLive();
+  }
+
+  void _resetForm() {
+    setState(() {
+      _sumController.clear();
+      _selectedZone = null;
+      _selectedRisksMap.clear();
+      _currentResult = null;
+    });
+  }
+
+  void _recalculateLive() {
+    if (!_isFormValid) {
+      setState(() => _currentResult = null);
+      return;
+    }
     try {
-      double insuredSum = double.parse(_sumController.text);
+      final cleanSum = _sumController.text.replaceAll(',', '').trim();
+      double insuredSum = double.parse(cleanSum);
       final selectedRisks = _selectedRisks;
 
-      Map<String, dynamic> result = FireInsuranceModel.calculatePremium(
+      final res = FireInsuranceModel.calculatePremium(
         insuredSum: insuredSum,
         zone: _selectedZone!,
         selectedRisks: selectedRisks,
       );
 
-      final riskPremiums = result['riskPremiums'] as Map<String, double>;
+      setState(() {
+        _currentInsuredSum = insuredSum;
+        _currentResult = res;
+      });
+    } catch (_) {
+      setState(() => _currentResult = null);
+    }
+  }
 
-      final riskBreakdown = selectedRisks
-          .map((r) => "$r (${_getRateForRisk(r)}%) - BDT ${NumberFormat("#,##0", "en_US").format(riskPremiums[r])}")
-          .join(', ');
+  List<ResultSection> _buildSections(List<String> selectedRisks, Map<String, double> riskPremiums, dynamic totalRate) {
+    return [
+      ResultSection("Property Details", {
+        "Zone": _selectedZone ?? 'N/A',
+      }),
+      ResultSection("Selected Risks", {
+        for (var risk in selectedRisks)
+          risk: "${_getRateForRisk(risk)}% (BDT ${NumberFormat("#,##0", "en_US").format(riskPremiums[risk] ?? 0)})",
+      }),
+      ResultSection("Summary", {
+        "Total Rate": "$totalRate%",
+      }),
+    ];
+  }
+
+  Map<String, dynamic> _buildExportDetails(
+    double insuredSum,
+    List<String> selectedRisks,
+    Map<String, double> riskPremiums,
+    Map<String, dynamic> result,
+  ) {
+    final riskBreakdown = selectedRisks
+        .map((r) => "$r (${_getRateForRisk(r)}%) - BDT ${NumberFormat("#,##0", "en_US").format(riskPremiums[r] ?? 0)}")
+        .join(', ');
+
+    return {
+      'Insured Sum': "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
+      'Zone': _selectedZone ?? '',
+      'Selected Risks': riskBreakdown,
+      'Total Rate': "${result['totalRate']}%",
+      'Net Premium': "BDT ${NumberFormat("#,##0", "en_US").format(result['netPremium'])}",
+      'VAT (15%)': "BDT ${NumberFormat("#,##0", "en_US").format(result['vat'])}",
+    };
+  }
+
+  void _calculateAndShowModal() async {
+    _recalculateLive();
+    if (_currentResult == null) {
+      final messenger = scaffoldMessengerKey.currentState;
+      messenger?.showSnackBar(
+        const SnackBar(content: Text("Invalid input. Please check your values.")),
+      );
+      return;
+    }
+
+    try {
+      final cleanSum = _sumController.text.replaceAll(',', '').trim();
+      double insuredSum = double.parse(cleanSum);
+      final selectedRisks = _selectedRisks;
+      final riskPremiums = (_currentResult!['riskPremiums'] as Map<String, double>?) ?? {};
+
+      final details = _buildExportDetails(insuredSum, selectedRisks, riskPremiums, _currentResult!);
 
       final historyItem = CalculationHistoryItem(
         date: DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now()),
         type: 'Fire Insurance',
-        totalPremium: result['totalPremium'],
-        details: {
-          'Insured Sum':
-              "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
-          'Zone': _selectedZone!,
-          'Selected Risks': riskBreakdown,
-          'Total Rate': "${result['totalRate']}%",
-          'Net Premium':
-              "BDT ${NumberFormat("#,##0", "en_US").format(result['netPremium'])}",
-          'VAT (15%)':
-              "BDT ${NumberFormat("#,##0", "en_US").format(result['vat'])}",
-        },
+        totalPremium: _currentResult!['totalPremium'],
+        details: details,
       );
       await HistoryService.saveCalculation(historyItem);
 
@@ -83,121 +171,219 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
         context: context,
         builder: (context) => ResultPopup(
           title: "Fire Insurance",
-          netPremium: result['netPremium'],
-          vat: result['vat'],
-          totalPremium: result['totalPremium'],
+          netPremium: _currentResult!['netPremium'],
+          vat: _currentResult!['vat'],
+          totalPremium: _currentResult!['totalPremium'],
           insuredSum: insuredSum,
-          sections: [
-            ResultSection("Property Details", {
-              "Zone": _selectedZone!,
-            }),
-            ResultSection("Selected Risks", {
-              for (var risk in selectedRisks)
-                risk: "${_getRateForRisk(risk)}% (BDT ${NumberFormat("#,##0", "en_US").format(riskPremiums[risk])})",
-            }),
-            ResultSection("Summary", {
-              "Total Rate": "${result['totalRate']}%",
-            }),
-          ],
-          exportDetails: {
-            'Insured Sum':
-                "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
-            'Zone': _selectedZone!,
-            'Selected Risks': riskBreakdown,
-            'Total Rate': "${result['totalRate']}%",
-            'Net Premium':
-                "BDT ${NumberFormat("#,##0", "en_US").format(result['netPremium'])}",
-            'VAT (15%)':
-                "BDT ${NumberFormat("#,##0", "en_US").format(result['vat'])}",
-          },
+          sections: _buildSections(selectedRisks, riskPremiums, _currentResult!['totalRate']),
+          exportDetails: details,
         ),
       );
-    } catch (e) {
-      if (!mounted) return;
-      final messenger = scaffoldMessengerKey.currentState;
-      if (messenger != null) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text("Invalid input. Please check your values.")),
-        );
-      }
-    }
+    } catch (_) {}
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = widget.isEmbeddedInDesktop || screenWidth >= 850;
+
+    final formContent = _buildFormContent(theme, isDesktop);
+
+    if (widget.isEmbeddedInDesktop) {
+      return _buildDesktopLayout(theme, formContent);
+    }
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text(FireInsuranceCalculator.displayName),
+        actions: [
+          if (isDesktop)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: "Reset Form (Esc)",
+              onPressed: _resetForm,
+            ),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          left: 24.0,
-          right: 24.0,
-          top: 32.0,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSectionHeader(theme, "Property Details"),
-            const SizedBox(height: 20),
-            CustomTextField(
-              controller: _sumController,
-              labelText: "Sum Insured (Tk)",
-              hintText: "e.g. 10,000,000",
-              prefixIcon: Icons.account_balance_wallet,
-              onChanged: (_) => setState(() {}),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 32),
-            _buildSectionHeader(theme, "Zone & Risk Selection"),
-            const SizedBox(height: 20),
-            CustomDropdown(
-              value: _selectedZone ?? '',
-              items: ['', ..._zones],
-              onChanged: !_selectedRisksMap.values.any((v) => v)
-                  ? (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedZone = value.isEmpty ? null : value;
-                        });
-                      }
-                    }
-                  : null,
-              labelText: "Zone",
-              icon: Icons.location_on_outlined,
-            ),
-            if (_selectedRisksMap.values.any((v) => v))
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(
-                  "Zone is locked while risks are selected",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.primary.withAlpha(150),
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
+      body: isDesktop
+          ? _buildDesktopLayout(theme, formContent)
+          : SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                left: 24.0,
+                right: 24.0,
+                top: 20.0,
               ),
-            const SizedBox(height: 16),
-            if (_selectedZone != null) ...[
-              _buildCheckboxesList(theme),
-              const SizedBox(height: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPresetsBar(theme),
+                  const SizedBox(height: 24),
+                  formContent,
+                  const SizedBox(height: 40),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isFormValid ? _calculateAndShowModal : null,
+                      child: const Text("Calculate Premium"),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildDesktopLayout(ThemeData theme, Widget formContent) {
+    final selectedRisks = _selectedRisks;
+    final riskPremiums = (_currentResult?['riskPremiums'] as Map<String, double>?) ?? {};
+    final totalRate = _currentResult?['totalRate'] ?? 0.0;
+
+    final sections = _buildSections(selectedRisks, riskPremiums, totalRate);
+    final exportDetails = _currentResult != null
+        ? _buildExportDetails(_currentInsuredSum, selectedRisks, riskPremiums, _currentResult!)
+        : <String, dynamic>{};
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildPresetsBar(theme),
+              const SizedBox(height: 24),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Form Column
+                  Expanded(
+                    flex: 6,
+                    child: Container(
+                      padding: const EdgeInsets.all(28),
+                      decoration: BoxDecoration(
+                        color: theme.cardTheme.color,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white12
+                              : Colors.black.withAlpha(15),
+                        ),
+                      ),
+                      child: formContent,
+                    ),
+                  ),
+                  const SizedBox(width: 28),
+                  // Summary Column
+                  Expanded(
+                    flex: 5,
+                    child: DesktopCalculationSummaryCard(
+                      title: "Fire Insurance",
+                      netPremium: _currentResult?['netPremium'] ?? 0.0,
+                      vat: _currentResult?['vat'] ?? 0.0,
+                      totalPremium: _currentResult?['totalPremium'] ?? 0.0,
+                      insuredSum: _currentInsuredSum,
+                      sections: sections,
+                      exportDetails: exportDetails,
+                      isValid: _isFormValid && _currentResult != null,
+                      onReset: _resetForm,
+                    ),
+                  ),
+                ],
+              ),
             ],
-            const SizedBox(height: 48),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isFormValid ? _calculatePremium : null,
-                child: const Text("Calculate Premium"),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPresetsBar(ThemeData theme) {
+    final presets = CalculatorRegistry.firePresets;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.flash_on, size: 16, color: theme.colorScheme.primary),
+            const SizedBox(width: 6),
+            Text(
+              "QUICK PRESETS",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                color: theme.colorScheme.primary,
+                letterSpacing: 1.2,
               ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 10),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: presets.map((p) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: ActionChip(
+                  avatar: Icon(p.icon, size: 16, color: theme.colorScheme.primary),
+                  label: Text(p.label),
+                  tooltip: p.description,
+                  onPressed: () => _applyPreset(p),
+                  backgroundColor: theme.colorScheme.primary.withAlpha(15),
+                  side: BorderSide(color: theme.colorScheme.primary.withAlpha(50)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormContent(ThemeData theme, bool isDesktop) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(theme, "Property Details"),
+        const SizedBox(height: 16),
+        CustomTextField(
+          controller: _sumController,
+          labelText: "Sum Insured (Tk)",
+          hintText: "e.g. 20,000,000",
+          prefixIcon: Icons.account_balance_wallet,
+          onChanged: (_) {
+            setState(() {});
+            _recalculateLive();
+          },
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 28),
+        _buildSectionHeader(theme, "Zone & Coverage"),
+        const SizedBox(height: 16),
+        CustomDropdown(
+          value: _selectedZone ?? '',
+          items: ['', ..._zones],
+          onChanged: (value) {
+            if (value != null) {
+              setState(() {
+                _selectedZone = value.isEmpty ? null : value;
+              });
+              _recalculateLive();
+            }
+          },
+          labelText: "Territory / Zone",
+          icon: Icons.location_on_outlined,
+        ),
+        const SizedBox(height: 20),
+        if (_selectedZone != null) ...[
+          _buildCheckboxesList(theme),
+        ],
+      ],
     );
   }
 
@@ -205,21 +391,27 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
     return Column(
       children: _allRisks.map((risk) {
         final rate = _getRateForRisk(risk);
+        final isChecked = _selectedRisksMap[risk] ?? false;
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withAlpha(8),
-            borderRadius: BorderRadius.circular(12),
+            color: isChecked
+                ? theme.colorScheme.primary.withAlpha(12)
+                : theme.colorScheme.primary.withAlpha(5),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: theme.colorScheme.primary.withAlpha(20),
+              color: isChecked
+                  ? theme.colorScheme.primary.withAlpha(60)
+                  : theme.colorScheme.primary.withAlpha(20),
             ),
           ),
           child: CheckboxListTile(
-            value: _selectedRisksMap[risk] ?? false,
+            value: isChecked,
             onChanged: (value) {
               setState(() {
                 _selectedRisksMap[risk] = value ?? false;
               });
+              _recalculateLive();
             },
             secondary: Icon(
               _getRiskIcon(risk),
@@ -234,7 +426,7 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
             subtitle: Text(
               "Rate: $rate%",
               style: TextStyle(
-                color: theme.colorScheme.primary.withAlpha(150),
+                color: theme.colorScheme.primary.withAlpha(170),
                 fontSize: 12,
               ),
             ),
@@ -265,7 +457,7 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
     return Text(
       title.toUpperCase(),
       style: TextStyle(
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: FontWeight.w900,
         color: theme.colorScheme.primary,
         letterSpacing: 1.5,
