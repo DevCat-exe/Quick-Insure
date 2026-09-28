@@ -15,11 +15,11 @@ class CalculationHistoryItem {
   });
 
   Map<String, dynamic> toJson() => {
-    'date': date,
-    'type': type,
-    'totalPremium': totalPremium,
-    'details': details,
-  };
+        'date': date,
+        'type': type,
+        'totalPremium': totalPremium,
+        'details': details,
+      };
 
   factory CalculationHistoryItem.fromJson(Map<String, dynamic> json) =>
       CalculationHistoryItem(
@@ -47,6 +47,14 @@ class HistoryService {
     return history
         .map((item) => CalculationHistoryItem.fromJson(jsonDecode(item)))
         .toList();
+  }
+
+  static Future<void> deleteCalculation(CalculationHistoryItem item) async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> history = prefs.getStringList(_key) ?? [];
+    final targetJson = jsonEncode(item.toJson());
+    history.removeWhere((str) => str == targetJson);
+    await prefs.setStringList(_key, history);
   }
 
   static Future<void> clearHistory() async {

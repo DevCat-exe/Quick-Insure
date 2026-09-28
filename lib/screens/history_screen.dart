@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/history_service.dart';
-import '../services/export_service.dart';
 import '../widgets/result_popup.dart';
+import '../widgets/desktop_history_view.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({super.key});
+  final bool isEmbeddedInDesktop;
+  const HistoryScreen({super.key, this.isEmbeddedInDesktop = false});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -13,11 +14,15 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   late Future<List<CalculationHistoryItem>> _historyFuture;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String _selectedFilter = 'All';
 
   double _parseBDT(String value) {
-    return double.tryParse(value.replaceAll('BDT', '').replaceAll(',', '').trim()) ?? 0;
+    return double.tryParse(
+            value.replaceAll('BDT', '').replaceAll(',', '').trim()) ??
+        0;
   }
-
 
   @override
   void initState() {
@@ -31,15 +36,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
     });
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   void _showHistoryItemPopup(CalculationHistoryItem item) {
     final details = item.details;
     final insuredSum = _parseBDT(details['Insured Sum']?.toString() ?? '0');
     final netPremium = _parseBDT(details['Net Premium']?.toString() ?? '0');
     final vat = _parseBDT(details['VAT (15%)']?.toString() ?? '0');
-    
+
     List<ResultSection> sections = [];
-    
-if (item.type == 'Motor Insurance') {
+
+    if (item.type == 'Motor Insurance') {
       sections = [
         ResultSection("Vehicle Details", {
           "Engine CC": details['Engine CC']?.toString() ?? '',
@@ -59,7 +70,8 @@ if (item.type == 'Motor Insurance') {
       for (final part in risksStr.split(', ')) {
         final trimmed = part.trim();
         if (trimmed.contains(' - BDT ')) {
-          final rateMatch = RegExp(r'^(.+?)\s*\(([\d.]+%)\)\s*-\s*BDT\s*(.+)$').firstMatch(trimmed);
+          final rateMatch = RegExp(r'^(.+?)\s*\(([\d.]+%)\)\s*-\s*BDT\s*(.+)$')
+              .firstMatch(trimmed);
           if (rateMatch != null) {
             final riskName = rateMatch.group(1)!.trim();
             final rate = rateMatch.group(2)!;
@@ -81,7 +93,8 @@ if (item.type == 'Motor Insurance') {
       ];
     } else {
       sections = [
-        ResultSection("Details", details.map((k, v) => MapEntry(k, v.toString()))),
+        ResultSection(
+            "Details", details.map((k, v) => MapEntry(k, v.toString()))),
       ];
     }
 
@@ -99,9 +112,58 @@ if (item.type == 'Motor Insurance') {
     );
   }
 
+  void _confirmClearHistory() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Clear All History"),
+        content: const Text(
+          "Are you sure you want to delete all calculation history? This action cannot be undone.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+            onPressed: () async {
+              await HistoryService.clearHistory();
+              if (mounted) {
+                Navigator.pop(context);
+                _refreshHistory();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("History cleared.")),
+                );
+              }
+            },
+            child: const Text("Clear"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = widget.isEmbeddedInDesktop || screenWidth >= 850;
+
+    if (isDesktop) {
+      if (widget.isEmbeddedInDesktop) {
+        return const DesktopHistoryView();
+      }
+      return Scaffold(
+        appBar: AppBar(title: const Text("Calculation History")),
+        body: const DesktopHistoryView(),
+      );
+    }
+
+    // Classic Mobile list layout
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -120,18 +182,47 @@ if (item.type == 'Motor Insurance') {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+
+          final allHistory = snapshot.data ?? [];
+          final query = _searchQuery.trim().toLowerCase();
+          final history = allHistory.where((item) {
+            if (_selectedFilter == 'Motor' && item.type != 'Motor Insurance') {
+              return false;
+            }
+            if (_selectedFilter == 'Fire' && item.type != 'Fire Insurance') {
+              return false;
+            }
+            if (query.isEmpty) return true;
+            return item.type.toLowerCase().contains(query) ||
+                item.date.toLowerCase().contains(query) ||
+                item.totalPremium.toString().contains(query) ||
+                item.details.values.any(
+                  (value) => value.toString().toLowerCase().contains(query),
+                );
+          }).toList();
+
+          if (allHistory.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.history_edu,
-                      size: 80, color: theme.colorScheme.primary.withAlpha(50)),
+                  Icon(
+                    Icons.history_toggle_off_rounded,
+                    size: 72,
+                    color: theme.colorScheme.primary.withAlpha(80),
+                  ),
                   const SizedBox(height: 16),
                   Text(
-                    "No history found",
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withAlpha(100),
+                    "No Calculations Yet",
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Your calculated premiums will appear here.",
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey,
                     ),
                   ),
                 ],
@@ -139,128 +230,190 @@ if (item.type == 'Motor Insurance') {
             );
           }
 
-          final history = snapshot.data!;
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: history.length,
-            itemBuilder: (context, index) {
-              final item = history[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 16),
-                child: InkWell(
-                  onTap: () => _showHistoryItemPopup(item),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          return RefreshIndicator(
+            onRefresh: () async => _refreshHistory(),
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              itemCount: history.isEmpty ? 2 : history.length + 1,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Flexible(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: theme.colorScheme.primary.withAlpha(20),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        item.type,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: theme.colorScheme.primary,
-                                        ),
-                                      ),
-                                    ),
+                        TextField(
+                          controller: _searchController,
+                          onChanged: (value) =>
+                              setState(() => _searchQuery = value),
+                          decoration: InputDecoration(
+                            hintText: 'Search history',
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: _searchQuery.isEmpty
+                                ? null
+                                : IconButton(
+                                    tooltip: 'Clear search',
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _searchQuery = '');
+                                    },
                                   ),
-                                  Flexible(
-                                    child: Text(
-                                      item.date,
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.onSurface
-                                            .withAlpha(120),
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                "Total Premium",
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "BDT ${NumberFormat("#,##0", "en_US").format(item.totalPremium)}",
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            ],
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: IconButton(
-                            icon: const Icon(Icons.picture_as_pdf_outlined),
-                            color: theme.colorScheme.primary,
-                            iconSize: 24,
-                            tooltip: "Export PDF",
-                            onPressed: () => ExportService.exportToPdf(
-                              title: item.type,
-                              totalPremium: item.totalPremium,
-                              details: item.details,
-                            ),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Wrap(
+                            spacing: 8,
+                            children: [
+                              for (final filter in ['All', 'Motor', 'Fire'])
+                                ChoiceChip(
+                                  label: Text(filter),
+                                  selected: _selectedFilter == filter,
+                                  onSelected: (_) => setState(
+                                    () => _selectedFilter = filter,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ],
                     ),
+                  );
+                }
+
+                if (history.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 32),
+                    child: Center(
+                      child: Text(
+                        'No matching calculations found.',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
+                  );
+                }
+
+                final item = history[index];
+                final isMotor = item.type == 'Motor Insurance';
+
+                return Dismissible(
+                  key: Key('${item.date}_$index'),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade700,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(Icons.delete, color: Colors.white),
                   ),
-                ),
-              );
-            },
+                  onDismissed: (_) async {
+                    await HistoryService.deleteCalculation(item);
+                    _refreshHistory();
+                  },
+                  child: Card(
+                    elevation: 0,
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: isDark
+                            ? Colors.white.withAlpha(25)
+                            : Colors.black.withAlpha(15),
+                      ),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () => _showHistoryItemPopup(item),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: (isMotor ? Colors.blue : Colors.orange)
+                                    .withAlpha(30),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isMotor
+                                    ? Icons.directions_car
+                                    : Icons.local_fire_department,
+                                color: isMotor ? Colors.blue : Colors.orange,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.type,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    item.date,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                  if (item.details['Insured Sum'] != null) ...[
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      "Insured: ${item.details['Insured Sum']}",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark
+                                            ? Colors.white60
+                                            : Colors.black54,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  "BDT ${NumberFormat("#,##0", "en_US").format(item.totalPremium)}",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 15,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Icon(
+                                  Icons.chevron_right,
+                                  size: 18,
+                                  color: Colors.grey,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           );
         },
-      ),
-    );
-  }
-
-  void _confirmClearHistory() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Clear History"),
-        content: const Text(
-            "Are you sure you want to clear all calculation history? This action cannot be undone."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () async {
-              final nav = Navigator.of(context);
-              await HistoryService.clearHistory();
-              if (mounted) {
-                nav.pop();
-                _refreshHistory();
-              }
-            },
-            child: Text("Clear All",
-                style: TextStyle(color: Theme.of(context).colorScheme.error)),
-          ),
-        ],
       ),
     );
   }
