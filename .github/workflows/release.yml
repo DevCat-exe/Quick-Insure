@@ -64,13 +64,46 @@ jobs:
           if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
             $isPrerelease = $env:INPUT_PRERELEASE -eq 'true'
           }
-          $assetTag = $tag -replace '[^0-9A-Za-z.-]', '_'
 
           "tag=$tag" >> $env:GITHUB_OUTPUT
-          "asset_tag=$assetTag" >> $env:GITHUB_OUTPUT
           "version=$version" >> $env:GITHUB_OUTPUT
           "build_number=$buildNumber" >> $env:GITHUB_OUTPUT
           "prerelease=$($isPrerelease.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+
+      - name: Prepare release notes from changelog
+        id: notes
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          IS_PRERELEASE: ${{ steps.release.outputs.prerelease }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $changelog = Get-Content 'assets/CHANGELOG.md' -Raw
+          $escapedVersion = [Regex]::Escape($env:RELEASE_VERSION)
+          $versionPattern = "(?ms)^##\s+\[$escapedVersion\][^\r\n]*\r?\n(?<body>.*?)(?=^##\s+\[|\z)"
+          $match = [Regex]::Match($changelog, $versionPattern)
+
+          if ($match.Success) {
+            $notes = $match.Groups['body'].Value.Trim()
+          } elseif ($env:IS_PRERELEASE -eq 'true') {
+            $latestPattern = '(?ms)^##\s+\[(?<version>\d+\.\d+\.\d+)\][^\r\n]*\r?\n(?<body>.*?)(?=^##\s+\[|\z)'
+            $latest = [Regex]::Match($changelog, $latestPattern)
+            if (-not $latest.Success) {
+              throw 'No versioned changelog section was found in assets/CHANGELOG.md.'
+            }
+            $notes = "Manual update test for $($env:RELEASE_TAG). Notes below are from $($latest.Groups['version'].Value).`n`n$($latest.Groups['body'].Value.Trim())"
+          } else {
+            throw "Missing ## [$($env:RELEASE_VERSION)] section in assets/CHANGELOG.md. Add release notes before tagging."
+          }
+
+          $delimiter = "CHANGELOG_$([Guid]::NewGuid().ToString('N'))"
+          $output = "body<<$delimiter`n$notes`n$delimiter`n"
+          [System.IO.File]::AppendAllText(
+            $env:GITHUB_OUTPUT,
+            $output,
+            [System.Text.UTF8Encoding]::new($false)
+          )
 
       - name: Recreate Android signing files from secrets
         shell: pwsh
@@ -165,25 +198,40 @@ jobs:
 
       - name: Package release assets
         shell: pwsh
-        env:
-          ASSET_TAG: ${{ steps.release.outputs.asset_tag }}
         run: |
           $releaseDirectory = 'build/release-assets'
           New-Item -ItemType Directory -Path $releaseDirectory -Force | Out-Null
-          Copy-Item 'build/app/outputs/flutter-apk/app-release.apk' "$releaseDirectory/quick_insure_$env:ASSET_TAG.apk"
           Copy-Item 'build/app/outputs/flutter-apk/app-release.apk' "$releaseDirectory/quick_insure.apk"
-          Compress-Archive -Path 'build/windows/x64/runner/Release/*' -DestinationPath "$releaseDirectory/quick_insure_windows_$env:ASSET_TAG.zip" -CompressionLevel Optimal
           Compress-Archive -Path 'build/windows/x64/runner/Release/*' -DestinationPath "$releaseDirectory/quick_insure_windows.zip" -CompressionLevel Optimal
+
+      - name: Remove legacy versioned duplicate assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          $releaseJson = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$env:RELEASE_TAG" 2>$null
+          if ($LASTEXITCODE -eq 0 -and $releaseJson) {
+            $release = $releaseJson | ConvertFrom-Json
+            foreach ($asset in $release.assets) {
+              if ($asset.name -match '^quick_insure(_windows)?_.+\.(apk|zip)$') {
+                gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/releases/assets/$($asset.id)"
+                if ($LASTEXITCODE -ne 0) {
+                  throw "Could not remove legacy duplicate asset $($asset.name)."
+                }
+              }
+            }
+          }
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.release.outputs.tag }}
           name: Quick Insure ${{ steps.release.outputs.tag }}
-          generate_release_notes: true
+          body: ${{ steps.notes.outputs.body }}
+          generate_release_notes: false
+          overwrite_files: true
           prerelease: ${{ steps.release.outputs.prerelease == 'true' }}
           files: |
-            build/release-assets/quick_insure_${{ steps.release.outputs.asset_tag }}.apk
             build/release-assets/quick_insure.apk
-            build/release-assets/quick_insure_windows_${{ steps.release.outputs.asset_tag }}.zip
             build/release-assets/quick_insure_windows.zip

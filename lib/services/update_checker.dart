@@ -94,10 +94,8 @@ class UpdateChecker {
           final windowsBundle = releaseAssets.firstWhere(
             (asset) =>
                 asset?['name'] is String &&
-                (asset!['name'] as String)
-                    .toLowerCase()
-                    .startsWith('quick_insure_windows_') &&
-                (asset['name'] as String).toLowerCase().endsWith('.zip'),
+                (asset!['name'] as String).toLowerCase() ==
+                    'quick_insure_windows.zip',
             orElse: () => null,
           );
           final isAndroidApk = isAndroid && apkAsset != null;
