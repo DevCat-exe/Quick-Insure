@@ -118,6 +118,7 @@ jobs:
         env:
           TEST_RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
+          $ErrorActionPreference = 'Stop'
           $pubspec = Get-Content pubspec.yaml -Raw
           if ($pubspec -notmatch '(?m)^version:\s*(\d+\.\d+\.\d+)\+(\d+)') {
             throw 'Could not read the current app version from pubspec.yaml.'
@@ -129,10 +130,15 @@ jobs:
           New-Item -ItemType Directory -Path $testClients -Force | Out-Null
 
           flutter build apk --release "--build-name=$baselineVersion" "--build-number=$baselineBuild" $testDefine
-          Copy-Item 'build/app/outputs/flutter-apk/app-release.apk' "$testClients/quick_insure_update_test_client.apk"
+          if ($LASTEXITCODE -ne 0) { throw 'Baseline Android APK build failed.' }
+          $baselineApk = 'build/app/outputs/flutter-apk/app-release.apk'
+          if (-not (Test-Path $baselineApk)) { throw 'Baseline APK was not produced.' }
+          Copy-Item $baselineApk "$testClients/quick_insure_update_test_client.apk"
 
           flutter build windows --release "--build-name=$baselineVersion" "--build-number=$baselineBuild" $testDefine
+          if ($LASTEXITCODE -ne 0) { throw 'Baseline Windows build failed.' }
           $windowsRelease = 'build/windows/x64/runner/Release'
+          if (-not (Test-Path $windowsRelease)) { throw 'Baseline Windows bundle was not produced.' }
           Compress-Archive -Path "$windowsRelease/*" -DestinationPath "$testClients/quick_insure_windows_update_test_client.zip" -CompressionLevel Optimal
 
       - name: Upload update-test baseline clients
