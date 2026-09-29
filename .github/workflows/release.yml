@@ -165,7 +165,9 @@ jobs:
           $releaseDirectory = 'build/release-assets'
           New-Item -ItemType Directory -Path $releaseDirectory -Force | Out-Null
           Copy-Item 'build/app/outputs/flutter-apk/app-release.apk' "$releaseDirectory/quick_insure_$env:ASSET_TAG.apk"
+          Copy-Item 'build/app/outputs/flutter-apk/app-release.apk' "$releaseDirectory/quick_insure.apk"
           Compress-Archive -Path 'build/windows/x64/runner/Release/*' -DestinationPath "$releaseDirectory/quick_insure_windows_$env:ASSET_TAG.zip" -CompressionLevel Optimal
+          Compress-Archive -Path 'build/windows/x64/runner/Release/*' -DestinationPath "$releaseDirectory/quick_insure_windows.zip" -CompressionLevel Optimal
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
@@ -176,4 +178,6 @@ jobs:
           prerelease: ${{ steps.release.outputs.prerelease == 'true' }}
           files: |
             build/release-assets/quick_insure_${{ steps.release.outputs.asset_tag }}.apk
+            build/release-assets/quick_insure.apk
             build/release-assets/quick_insure_windows_${{ steps.release.outputs.asset_tag }}.zip
+            build/release-assets/quick_insure_windows.zip
