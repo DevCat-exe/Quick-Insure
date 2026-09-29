@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../services/export_service.dart';
 import '../services/history_service.dart';
+import 'app_snackbar.dart';
 import '../widgets/result_popup.dart';
 
 class DesktopCalculationSummaryCard extends StatelessWidget {
@@ -42,16 +43,17 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
     await HistoryService.saveCalculation(historyItem);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      appSnackBar(
+        context,
         content: Row(
           children: [
-            const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+            const Icon(Icons.check_circle_outline,
+                color: Colors.white, size: 20),
             const SizedBox(width: 10),
             Text("Calculation saved to history!"),
           ],
         ),
         backgroundColor: Colors.green.shade700,
-        behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
     );
@@ -62,20 +64,26 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
     if (!isValid) return;
     final buffer = StringBuffer();
     buffer.writeln("=== QUICK INSURE: $title ===");
-    buffer.writeln("Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now())}");
-    buffer.writeln("Sum Insured: BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}");
-    buffer.writeln("Net Premium: BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}");
-    buffer.writeln("VAT (15%): BDT ${NumberFormat("#,##0", "en_US").format(vat)}");
-    buffer.writeln("TOTAL PREMIUM: BDT ${NumberFormat("#,##0", "en_US").format(totalPremium)}");
+    buffer.writeln(
+        "Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now())}");
+    buffer.writeln(
+        "Sum Insured: BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}");
+    buffer.writeln(
+        "Net Premium: BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}");
+    buffer.writeln(
+        "VAT (15%): BDT ${NumberFormat("#,##0", "en_US").format(vat)}");
+    buffer.writeln(
+        "TOTAL PREMIUM: BDT ${NumberFormat("#,##0", "en_US").format(totalPremium)}");
     for (final sec in sections) {
       buffer.writeln("\n[${sec.title}]");
       sec.items.forEach((k, v) => buffer.writeln("$k: $v"));
     }
     Clipboard.setData(ClipboardData(text: buffer.toString()));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Summary copied to clipboard!"),
-        duration: Duration(seconds: 1),
+      appSnackBar(
+        context,
+        content: const Text("Summary copied to clipboard!"),
+        duration: const Duration(seconds: 1),
       ),
     );
   }
@@ -117,14 +125,14 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               Text(
-                "Live Summary",
+                "Summary",
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                "Fill in the required parameters on the left to see the instant calculation breakdown here.",
+                "Fill in the required parameters to see the calculation breakdown.",
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.textTheme.bodyMedium?.color?.withAlpha(180),
@@ -175,54 +183,21 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                       color: Colors.white.withAlpha(30),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.receipt_long, color: Colors.white, size: 26),
+                    child: const Icon(Icons.receipt_long,
+                        color: Colors.white, size: 26),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withAlpha(40),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.bolt, color: Colors.amberAccent, size: 14),
-                                  SizedBox(width: 2),
-                                  Text(
-                                    "LIVE",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
                         Text(
-                          "Official Premium Estimate",
-                          style: TextStyle(
-                            color: Colors.white.withAlpha(200),
-                            fontSize: 12,
+                          title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.3,
                           ),
                         ),
                       ],
@@ -245,7 +220,8 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                 children: [
                   // Prominent Grand Total Block
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
                     decoration: BoxDecoration(
                       color: primary.withAlpha(isDark ? 30 : 15),
                       borderRadius: BorderRadius.circular(16),
@@ -271,7 +247,8 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                               "Incl. 15% Govt. VAT",
                               style: TextStyle(
                                 fontSize: 11,
-                                color: theme.textTheme.bodyMedium?.color?.withAlpha(160),
+                                color: theme.textTheme.bodyMedium?.color
+                                    ?.withAlpha(160),
                               ),
                             ),
                           ],
@@ -337,12 +314,44 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.black12 : Colors.grey.withAlpha(20),
+                        color:
+                            isDark ? Colors.black12 : Colors.grey.withAlpha(20),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
                       child: Column(
                         children: section.items.entries.map((e) {
+                          if (e.key == 'Registration Number') {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      e.key,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: theme.textTheme.bodyMedium?.color
+                                            ?.withAlpha(170),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      e.value,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      softWrap: true,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             child: Row(
@@ -352,7 +361,8 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                                   e.key,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: theme.textTheme.bodyMedium?.color?.withAlpha(200),
+                                    color: theme.textTheme.bodyMedium?.color
+                                        ?.withAlpha(200),
                                   ),
                                 ),
                                 Text(
@@ -376,12 +386,16 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        flex: 2,
-                        child: ElevatedButton.icon(
+                        child: OutlinedButton.icon(
                           icon: const Icon(Icons.picture_as_pdf, size: 18),
                           label: const Text("Export PDF"),
-                          style: ElevatedButton.styleFrom(
+                          style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: BorderSide(color: primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            foregroundColor: primary,
                           ),
                           onPressed: () => ExportService.exportToPdf(
                             title: title,
@@ -392,13 +406,14 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        flex: 2,
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.bookmark_add_outlined, size: 18),
+                        child: ElevatedButton.icon(
+                          icon:
+                              const Icon(Icons.bookmark_add_outlined, size: 18),
                           label: const Text("Save"),
-                          style: OutlinedButton.styleFrom(
+                          style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: BorderSide(color: primary),
+                            backgroundColor: primary,
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -416,7 +431,8 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                             padding: const EdgeInsets.all(14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
-                              side: BorderSide(color: theme.dividerColor.withAlpha(50)),
+                              side: BorderSide(
+                                  color: theme.dividerColor.withAlpha(50)),
                             ),
                           ),
                         ),
@@ -432,7 +448,8 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricTile(ThemeData theme, String label, String value, IconData icon) {
+  Widget _buildMetricTile(
+      ThemeData theme, String label, String value, IconData icon) {
     final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),

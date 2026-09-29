@@ -1,13 +1,21 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import '../widgets/app_snackbar.dart';
 
 class UpdateChecker {
+  static const String _testReleaseTag =
+      String.fromEnvironment('QUICK_INSURE_TEST_RELEASE_TAG');
+
   final String githubRepo = "DevCat-exe/Quick-Insure";
   String get latestReleaseUrl =>
       "https://github.com/$githubRepo/releases/latest";
@@ -20,7 +28,8 @@ class UpdateChecker {
     if (messenger == null) return false;
 
     messenger.showSnackBar(
-      SnackBar(
+      appSnackBar(
+        context,
         content: Row(
           children: [
             SizedBox(
@@ -47,25 +56,23 @@ class UpdateChecker {
           ],
         ),
         backgroundColor: theme.colorScheme.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         duration: Duration(seconds: 10),
       ),
     );
 
     try {
-      final response = await http.get(Uri.parse(
-          "https://api.github.com/repos/$githubRepo/releases/latest"));
+      final releaseEndpoint = _testReleaseTag.isEmpty
+          ? "https://api.github.com/repos/$githubRepo/releases/latest"
+          : "https://api.github.com/repos/$githubRepo/releases/tags/${Uri.encodeComponent(_testReleaseTag)}";
+      final response = await http.get(Uri.parse(releaseEndpoint));
 
       messenger.hideCurrentSnackBar();
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final latestVersion =
-            (data["tag_name"] as String?)?.replaceAll("v", "") ?? "0.0.0";
+            (data["tag_name"] as String?)?.replaceFirst(RegExp(r'^v'), '') ??
+                "0.0.0";
         final List<dynamic> assets = data["assets"] as List<dynamic>;
         final changelog = data["body"] as String?;
 
@@ -75,22 +82,48 @@ class UpdateChecker {
         if (_isNewerVersion(latestVersion, currentVersion)) {
           final isAndroid =
               !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
-          final apkAsset = assets.cast<Map<String, dynamic>?>().firstWhere(
-                (asset) =>
-                    asset?["name"] is String &&
-                    (asset!["name"] as String).toLowerCase().endsWith('.apk'),
-                orElse: () => null,
-              );
-          final downloadUrl = isAndroid && apkAsset != null
-              ? apkAsset["browser_download_url"] as String
-              : latestReleaseUrl;
+          final isWindows =
+              !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
+          final releaseAssets = assets.cast<Map<String, dynamic>?>();
+          final apkAsset = releaseAssets.firstWhere(
+            (asset) =>
+                asset?['name'] is String &&
+                (asset!['name'] as String).toLowerCase().endsWith('.apk'),
+            orElse: () => null,
+          );
+          final windowsBundle = releaseAssets.firstWhere(
+            (asset) =>
+                asset?['name'] is String &&
+                (asset!['name'] as String)
+                    .toLowerCase()
+                    .startsWith('quick_insure_windows_') &&
+                (asset['name'] as String).toLowerCase().endsWith('.zip'),
+            orElse: () => null,
+          );
+          final isAndroidApk = isAndroid && apkAsset != null;
+          final isWindowsBundle = isWindows && windowsBundle != null;
+          final selectedAsset = isAndroidApk
+              ? apkAsset
+              : isWindowsBundle
+                  ? windowsBundle
+                  : null;
+          final downloadUrl = selectedAsset == null
+              ? latestReleaseUrl
+              : selectedAsset['browser_download_url'] as String;
           if (context.mounted) {
             _showUpdateChangelogDialog(
               context,
               changelog,
               downloadUrl,
               latestVersion,
-              isAndroid && apkAsset != null ? "Download APK" : "View Release",
+              isAndroidApk
+                  ? 'Download APK'
+                  : isWindowsBundle
+                      ? 'Install Update'
+                      : 'View Release',
+              isAndroidApk: isAndroidApk,
+              isWindowsBundle: isWindowsBundle,
+              scaffoldMessengerKey: scaffoldMessengerKey,
             );
           }
           return true;
@@ -102,7 +135,8 @@ class UpdateChecker {
       messenger.hideCurrentSnackBar();
 
       messenger.showSnackBar(
-        SnackBar(
+        appSnackBar(
+          context,
           content: Text(
             "Network error. Please check your connection.",
             style: theme.textTheme.bodyMedium
@@ -110,11 +144,6 @@ class UpdateChecker {
             overflow: TextOverflow.ellipsis,
           ),
           backgroundColor: theme.colorScheme.primary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -124,8 +153,13 @@ class UpdateChecker {
   }
 
   bool _isNewerVersion(String latest, String current) {
-    List<int> latestParts = latest.split('.').map(int.parse).toList();
-    List<int> currentParts = current.split('.').map(int.parse).toList();
+    String numericVersion(String version) =>
+        version.replaceFirst(RegExp(r'^v'), '').split(RegExp(r'[-+]')).first;
+
+    final latestParts =
+        numericVersion(latest).split('.').map(int.parse).toList();
+    final currentParts =
+        numericVersion(current).split('.').map(int.parse).toList();
 
     for (int i = 0; i < latestParts.length; i++) {
       if (latestParts[i] > (i < currentParts.length ? currentParts[i] : 0)) {
@@ -140,8 +174,11 @@ class UpdateChecker {
     String? changelog,
     String releaseUrl,
     String newVersion,
-    String actionLabel,
-  ) {
+    String actionLabel, {
+    required bool isAndroidApk,
+    required bool isWindowsBundle,
+    required GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey,
+  }) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final dialogWidth = screenWidth < 600 ? screenWidth * 0.95 : 700.0;
@@ -149,7 +186,7 @@ class UpdateChecker {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text("Update Available!"),
         content: ConstrainedBox(
           constraints: BoxConstraints(
@@ -159,6 +196,7 @@ class UpdateChecker {
           child: Scrollbar(
             thumbVisibility: true,
             child: SingleChildScrollView(
+              primary: true,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,7 +213,7 @@ class UpdateChecker {
                   const SizedBox(height: 8),
                   if (changelog != null && changelog.trim().isNotEmpty)
                     MarkdownBody(
-                      data: changelog,
+                      data: removeReleaseHeading(changelog, newVersion),
                       styleSheet: MarkdownStyleSheet(
                         p: Theme.of(context).textTheme.bodyMedium,
                         h2: Theme.of(context)
@@ -199,16 +237,345 @@ class UpdateChecker {
             child: Text("Later"),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(0, 36),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              visualDensity: VisualDensity.compact,
+              textStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             onPressed: () async {
-              Navigator.pop(context);
-              await launchUrl(Uri.parse(releaseUrl),
-                  mode: LaunchMode.externalApplication);
+              Navigator.pop(dialogContext);
+              if (isAndroidApk) {
+                await _downloadAndInstallAndroidApk(
+                  context,
+                  releaseUrl,
+                  newVersion,
+                  scaffoldMessengerKey,
+                );
+              } else if (isWindowsBundle) {
+                await _downloadAndInstallWindowsBundle(
+                  context,
+                  releaseUrl,
+                  newVersion,
+                  scaffoldMessengerKey,
+                );
+              } else {
+                await launchUrl(Uri.parse(releaseUrl),
+                    mode: LaunchMode.externalApplication);
+              }
             },
             child: Text(actionLabel),
           ),
         ],
       ),
     );
+  }
+
+  String removeReleaseHeading(String markdown, String version) {
+    final lines = markdown.split('\n');
+    final firstContentIndex =
+        lines.indexWhere((line) => line.trim().isNotEmpty);
+    if (firstContentIndex < 0) return markdown;
+
+    final heading = lines[firstContentIndex].trim();
+    final cleanVersion =
+        version.split('+').first.replaceFirst(RegExp(r'^v'), '');
+    if (heading.contains(cleanVersion) &&
+        (heading.startsWith('#') || heading.startsWith('['))) {
+      lines.removeAt(firstContentIndex);
+      if (firstContentIndex < lines.length &&
+          lines[firstContentIndex].trim().isEmpty) {
+        lines.removeAt(firstContentIndex);
+      }
+      return lines.join('\n').trim();
+    }
+    return markdown;
+  }
+
+  Future<void> _downloadAndInstallAndroidApk(
+    BuildContext context,
+    String downloadUrl,
+    String version,
+    GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey,
+  ) async {
+    final progress = ValueNotifier<double?>(null);
+    final client = http.Client();
+    final dialogNavigator = Navigator.of(context, rootNavigator: true);
+    var progressDialogOpen = false;
+
+    try {
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            title: const Text('Downloading update'),
+            content: SizedBox(
+              width: 320,
+              child: ValueListenableBuilder<double?>(
+                valueListenable: progress,
+                builder: (context, value, _) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LinearProgressIndicator(value: value),
+                    const SizedBox(height: 12),
+                    Text(
+                      value == null
+                          ? 'Downloading Quick Insure v$version...'
+                          : 'Downloaded ${(value * 100).round()}%',
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Android will ask you to approve the installation.',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      progressDialogOpen = true;
+
+      final response = await client.send(
+        http.Request('GET', Uri.parse(downloadUrl)),
+      );
+      if (response.statusCode != HttpStatus.ok) {
+        throw HttpException('APK download failed (${response.statusCode}).');
+      }
+
+      final totalBytes = response.contentLength;
+      final directory = await getApplicationSupportDirectory();
+      final safeVersion = version.replaceAll(RegExp(r'[^0-9A-Za-z.-]'), '_');
+      final partialFile =
+          File('${directory.path}/quick_insure_$safeVersion.apk.part');
+      final apkFile = File('${directory.path}/quick_insure_$safeVersion.apk');
+      if (await partialFile.exists()) await partialFile.delete();
+
+      final sink = partialFile.openWrite();
+      try {
+        var receivedBytes = 0;
+        await for (final chunk in response.stream) {
+          sink.add(chunk);
+          receivedBytes += chunk.length;
+          if (totalBytes != null && totalBytes > 0) {
+            progress.value = receivedBytes / totalBytes;
+          }
+        }
+      } finally {
+        await sink.close();
+      }
+
+      if (await apkFile.exists()) await apkFile.delete();
+      await partialFile.rename(apkFile.path);
+
+      if (!dialogNavigator.mounted) return;
+      dialogNavigator.pop();
+      progressDialogOpen = false;
+      await OpenFilex.open(apkFile.path);
+    } catch (error) {
+      debugPrint('APK update failed: $error');
+      if (progressDialogOpen && dialogNavigator.mounted) {
+        dialogNavigator.pop();
+      }
+      if (context.mounted) {
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          appSnackBar(
+            context,
+            content: const Text(
+              'Could not download the update. Check your connection and try again.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      client.close();
+      progress.dispose();
+    }
+  }
+
+  Future<void> _downloadAndInstallWindowsBundle(
+    BuildContext context,
+    String downloadUrl,
+    String version,
+    GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey,
+  ) async {
+    final executable = File(Platform.resolvedExecutable);
+    final installDirectory = executable.parent;
+    final progress = ValueNotifier<double?>(null);
+    final client = http.Client();
+    final dialogNavigator = Navigator.of(context, rootNavigator: true);
+    var progressDialogOpen = false;
+    File? partialArchive;
+
+    try {
+      final writeProbe = File(
+        '${installDirectory.path}/.quick-insure-update-${pid.toString()}',
+      );
+      await writeProbe.writeAsString('');
+      await writeProbe.delete();
+
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            title: const Text('Downloading desktop update'),
+            content: SizedBox(
+              width: 320,
+              child: ValueListenableBuilder<double?>(
+                valueListenable: progress,
+                builder: (context, value, _) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LinearProgressIndicator(value: value),
+                    const SizedBox(height: 12),
+                    Text(
+                      value == null
+                          ? 'Downloading Quick Insure v$version...'
+                          : 'Downloaded ${(value * 100).round()}%',
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'The app will close and reopen to finish installing.',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      progressDialogOpen = true;
+
+      final response = await client.send(
+        http.Request('GET', Uri.parse(downloadUrl)),
+      );
+      if (response.statusCode != HttpStatus.ok) {
+        throw HttpException(
+            'Windows update download failed (${response.statusCode}).');
+      }
+
+      final tempDirectory = await getTemporaryDirectory();
+      final safeVersion = version.replaceAll(RegExp(r'[^0-9A-Za-z.-]'), '_');
+      partialArchive = File(
+        '${tempDirectory.path}/quick_insure_windows_$safeVersion.zip.part',
+      );
+      final archive = File(
+        '${tempDirectory.path}/quick_insure_windows_$safeVersion.zip',
+      );
+      if (await partialArchive.exists()) await partialArchive.delete();
+
+      final sink = partialArchive.openWrite();
+      try {
+        var receivedBytes = 0;
+        await for (final chunk in response.stream) {
+          sink.add(chunk);
+          receivedBytes += chunk.length;
+          if (response.contentLength case final totalBytes?
+              when totalBytes > 0) {
+            progress.value = receivedBytes / totalBytes;
+          }
+        }
+      } finally {
+        await sink.close();
+      }
+      if (await archive.exists()) await archive.delete();
+      await partialArchive.rename(archive.path);
+      partialArchive = null;
+
+      final script = File('${tempDirectory.path}/quick_insure_update.ps1');
+      await script.writeAsString(r'''
+param(
+  [int]$ProcessId,
+  [string]$ArchivePath,
+  [string]$InstallDirectory,
+  [string]$ExecutablePath,
+  [string]$TempDirectory
+)
+$ErrorActionPreference = 'Stop'
+$StageDirectory = Join-Path $TempDirectory ('quick-insure-stage-' + [guid]::NewGuid())
+try {
+  Wait-Process -Id $ProcessId -ErrorAction SilentlyContinue
+  New-Item -ItemType Directory -Path $StageDirectory -Force | Out-Null
+  Expand-Archive -LiteralPath $ArchivePath -DestinationPath $StageDirectory -Force
+  $ExecutableName = [System.IO.Path]::GetFileName($ExecutablePath)
+  $UpdatedExecutable = Get-ChildItem -LiteralPath $StageDirectory -Filter $ExecutableName -File -Recurse | Select-Object -First 1
+  if ($null -eq $UpdatedExecutable) { throw "Update bundle does not contain $ExecutableName." }
+  Get-ChildItem -LiteralPath $UpdatedExecutable.DirectoryName -Force | ForEach-Object {
+    Copy-Item -LiteralPath $_.FullName -Destination $InstallDirectory -Recurse -Force
+  }
+  Start-Process -FilePath $ExecutablePath -WorkingDirectory $InstallDirectory
+} catch {
+  $Message = "Quick Insure could not finish updating: $($_.Exception.Message)"
+  try {
+    Add-Type -AssemblyName PresentationFramework
+    [System.Windows.MessageBox]::Show($Message, 'Quick Insure update failed', 'OK', 'Error') | Out-Null
+  } catch {}
+} finally {
+  Remove-Item -LiteralPath $StageDirectory -Recurse -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $ArchivePath -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue
+}
+''');
+
+      final installDialogNavigator = dialogNavigator;
+      if (!installDialogNavigator.mounted) return;
+      installDialogNavigator.pop();
+      progressDialogOpen = false;
+
+      await Process.start(
+        'powershell.exe',
+        [
+          '-NoProfile',
+          '-ExecutionPolicy',
+          'Bypass',
+          '-WindowStyle',
+          'Hidden',
+          '-File',
+          script.path,
+          pid.toString(),
+          archive.path,
+          installDirectory.path,
+          executable.path,
+          tempDirectory.path,
+        ],
+        mode: ProcessStartMode.detached,
+      );
+      await windowManager.close();
+    } catch (error) {
+      debugPrint('Windows update failed: $error');
+      if (partialArchive != null && await partialArchive.exists()) {
+        await partialArchive.delete();
+      }
+      if (progressDialogOpen && dialogNavigator.mounted) {
+        dialogNavigator.pop();
+      }
+      if (context.mounted) {
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          appSnackBar(
+            context,
+            content: const Text(
+              'Could not update here. Move Quick Insure to a writable folder and try again.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      client.close();
+      progress.dispose();
+    }
   }
 
   String? _extractVersionSection(String markdown, String version) {

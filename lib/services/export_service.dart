@@ -1,7 +1,9 @@
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
+import 'package:open_filex/open_filex.dart';
 
 class ExportService {
   static Future<void> exportToPdf({
@@ -102,9 +104,12 @@ class ExportService {
       ),
     );
 
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-      name: '${title.replaceAll(' ', '_')}_Premium.pdf',
-    );
+    final output = await getApplicationDocumentsDirectory();
+    final fileName =
+        '${title.replaceAll(' ', '_')}_Premium_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.pdf';
+    final file = File('${output.path}/$fileName');
+    await file.writeAsBytes(await pdf.save());
+
+    await OpenFilex.open(file.path);
   }
 }

@@ -8,7 +8,6 @@ import '../screens/fire_insurance_calculator.dart';
 import '../widgets/calculator_card.dart';
 import '../screens/history_screen.dart';
 import '../widgets/desktop_app_shell.dart';
-import '../services/history_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onToggleDarkMode;
@@ -168,6 +167,7 @@ class HomeScreenState extends State<HomeScreen>
               child: Scrollbar(
                 thumbVisibility: true,
                 child: SingleChildScrollView(
+                  primary: true,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,7 +190,10 @@ class HomeScreenState extends State<HomeScreen>
                             child: CircularProgressIndicator(strokeWidth: 2))
                       else if (changelog != null && changelog.trim().isNotEmpty)
                         MarkdownBody(
-                          data: changelog,
+                          data: _updateChecker.removeReleaseHeading(
+                            changelog,
+                            _appVersion,
+                          ),
                           styleSheet: MarkdownStyleSheet(
                             p: TextStyle(fontSize: 13),
                             h2: TextStyle(
@@ -228,74 +231,6 @@ class HomeScreenState extends State<HomeScreen>
     final packageInfo = await PackageInfo.fromPlatform();
     final currentVersion = packageInfo.version;
     return await _updateChecker.fetchChangelogForVersion(currentVersion);
-  }
-
-  Widget _buildSettingsPanel() {
-    return ListView(
-      children: [
-        SwitchListTile(
-          secondary: Icon(
-            widget.darkMode
-                ? Icons.dark_mode_outlined
-                : Icons.light_mode_outlined,
-          ),
-          title: const Text('Dark mode'),
-          value: widget.darkMode,
-          onChanged: (_) => widget.onToggleDarkMode(),
-        ),
-        const Divider(height: 1),
-        ListTile(
-          leading: const Icon(Icons.system_update_alt_outlined),
-          title: const Text('Check for updates'),
-          onTap: _checkForUpdate,
-        ),
-        ListTile(
-          leading: const Icon(Icons.info_outline),
-          title: const Text('About Quick Insure'),
-          onTap: () => _openAboutDialog(context),
-        ),
-        ListTile(
-          leading: const Icon(Icons.delete_sweep_outlined),
-          title: const Text('Clear calculation history'),
-          onTap: _confirmClearHistory,
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Text(
-            'Version $_appVersion',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _confirmClearHistory() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Clear calculation history?'),
-        content: const Text('This permanently deletes all saved calculations.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Clear history'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      await HistoryService.clearHistory();
-      if (mounted) {
-        widget.scaffoldMessengerKey.currentState?.showSnackBar(
-          const SnackBar(content: Text('Calculation history cleared.')),
-        );
-      }
-    }
   }
 
   void _showComingSoonPopup(BuildContext context) {
@@ -350,8 +285,16 @@ class HomeScreenState extends State<HomeScreen>
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: accent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
                   onPressed: () => Navigator.pop(context),
-                  child: const Text("Got it!"),
+                  child: const Text("Got it"),
                 ),
               ),
             ],
@@ -363,8 +306,12 @@ class HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    if (screenWidth >= 850) {
+    final mediaSize = MediaQuery.sizeOf(context);
+    final platform = Theme.of(context).platform;
+    final isDesktopPlatform = platform == TargetPlatform.windows ||
+        platform == TargetPlatform.macOS ||
+        platform == TargetPlatform.linux;
+    if (isDesktopPlatform || mediaSize.shortestSide >= 600) {
       return DesktopAppShell(
         onToggleDarkMode: widget.onToggleDarkMode,
         darkMode: widget.darkMode,
@@ -373,72 +320,124 @@ class HomeScreenState extends State<HomeScreen>
     }
 
     return Scaffold(
-      appBar: _selectedTab == 1
-          ? null
-          : AppBar(
-              title: Text(_selectedTab == 2 ? 'Settings' : 'Quick Insure'),
-            ),
       floatingActionButton: null,
-      body: _selectedTab == 1
-          ? const HistoryScreen()
-          : _selectedTab == 2
-              ? _buildSettingsPanel()
-              : FadeTransition(
-                  opacity: _fadeInAnimation,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 24.0, horizontal: 8.0),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final screenWidth = MediaQuery.of(context).size.width;
-                        final isWide = constraints.maxWidth > 600;
-                        final isSmallScreen = screenWidth < 380;
-                        final crossAxisCount = isWide ? 3 : 2;
-                        return GridView.count(
-                          padding: EdgeInsets.zero,
-                          crossAxisCount: crossAxisCount,
-                          crossAxisSpacing: 24,
-                          mainAxisSpacing: isSmallScreen ? 16 : 24,
-                          childAspectRatio: isSmallScreen ? 0.95 : 1.0,
-                          physics: const BouncingScrollPhysics(),
-                          children: [
-                            CalculatorCard(
-                              title: 'Motor Insurance',
-                              icon: Icons.directions_car,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        MotorInsuranceCalculator(),
-                                  ),
-                                );
-                              },
-                            ),
-                            CalculatorCard(
-                              title: 'Fire Insurance',
-                              icon: Icons.local_fire_department,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        FireInsuranceCalculator(),
-                                  ),
-                                );
-                              },
-                            ),
-                            CalculatorCard(
-                              title: 'Overseas Mediclaim',
-                              icon: Icons.health_and_safety,
-                              onTap: () => _showComingSoonPopup(context),
-                            ),
-                          ],
-                        );
-                      },
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 380),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        layoutBuilder: (currentChild, previousChildren) => Stack(
+          fit: StackFit.expand,
+          children: [
+            ...previousChildren,
+            if (currentChild != null) currentChild,
+          ],
+        ),
+        transitionBuilder: (child, animation) {
+          final isEntering = (child.key as ValueKey<int>).value == _selectedTab;
+          final direction = _selectedTab == 1 ? 1.0 : -1.0;
+          final beginX = (isEntering ? direction : -direction) * 0.035;
+          final slide = Tween<Offset>(
+            begin: Offset(beginX, 0),
+            end: Offset.zero,
+          ).animate(animation);
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(position: slide, child: child),
+          );
+        },
+        child: KeyedSubtree(
+          key: ValueKey(_selectedTab),
+          child: _selectedTab == 1
+              ? const HistoryScreen()
+              : Scaffold(
+                  appBar: AppBar(
+                    title: const Text('Quick Insure'),
+                    actions: [
+                      IconButton(
+                        tooltip: widget.darkMode ? 'Light mode' : 'Dark mode',
+                        icon: Icon(widget.darkMode
+                            ? Icons.light_mode_outlined
+                            : Icons.dark_mode_outlined),
+                        onPressed: widget.onToggleDarkMode,
+                      ),
+                      PopupMenuButton<String>(
+                        tooltip: 'More options',
+                        onSelected: (action) {
+                          if (action == 'updates') _checkForUpdate();
+                          if (action == 'about') _openAboutDialog(context);
+                        },
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(
+                            value: 'updates',
+                            child: Text('Check for updates'),
+                          ),
+                          PopupMenuItem(
+                            value: 'about',
+                            child: Text('About Quick Insure'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  body: FadeTransition(
+                    opacity: _fadeInAnimation,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 24.0, horizontal: 8.0),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final screenWidth = MediaQuery.of(context).size.width;
+                          final isWide = constraints.maxWidth > 600;
+                          final isSmallScreen = screenWidth < 380;
+                          final crossAxisCount = isWide ? 3 : 2;
+                          return GridView.count(
+                            padding: EdgeInsets.zero,
+                            crossAxisCount: crossAxisCount,
+                            crossAxisSpacing: 24,
+                            mainAxisSpacing: isSmallScreen ? 16 : 24,
+                            childAspectRatio: isSmallScreen ? 0.95 : 1.0,
+                            physics: const BouncingScrollPhysics(),
+                            children: [
+                              CalculatorCard(
+                                title: 'Motor Insurance',
+                                icon: Icons.directions_car,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          MotorInsuranceCalculator(),
+                                    ),
+                                  );
+                                },
+                              ),
+                              CalculatorCard(
+                                title: 'Fire Insurance',
+                                icon: Icons.local_fire_department,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          FireInsuranceCalculator(),
+                                    ),
+                                  );
+                                },
+                              ),
+                              CalculatorCard(
+                                title: 'Overseas Mediclaim',
+                                icon: Icons.health_and_safety,
+                                onTap: () => _showComingSoonPopup(context),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
+        ),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedTab,
         onDestinationSelected: (index) => setState(() => _selectedTab = index),
@@ -452,11 +451,6 @@ class HomeScreenState extends State<HomeScreen>
             icon: Icon(Icons.history_outlined),
             selectedIcon: Icon(Icons.history),
             label: 'History',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Settings',
           ),
         ],
       ),

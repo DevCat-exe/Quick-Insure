@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/fire_insurance_model.dart';
-import '../models/calculator_registry.dart';
 import '../widgets/result_popup.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_dropdown.dart';
@@ -21,11 +20,13 @@ class FireInsuranceCalculator extends StatefulWidget {
 }
 
 class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
-  final TextEditingController _sumController = TextEditingController(text: "20000000");
-  String? _selectedZone = 'Dhaka';
+  final TextEditingController _sumController = TextEditingController();
+  String? _selectedZone;
   final Map<String, bool> _selectedRisksMap = {
-    'Fire': true,
-    'Earthquake': true,
+    'Fire': false,
+    'Earthquake': false,
+    'Cyclone': false,
+    'Flood': false,
   };
 
   static const List<String> _zones = ['Dhaka', 'Chittagong', 'Sylhet'];
@@ -37,13 +38,7 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
   ];
 
   Map<String, dynamic>? _currentResult;
-  double _currentInsuredSum = 20000000;
-
-  @override
-  void initState() {
-    super.initState();
-    _recalculateLive();
-  }
+  double _currentInsuredSum = 0;
 
   bool get _isFormValid =>
       _sumController.text.trim().isNotEmpty &&
@@ -56,19 +51,6 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
   double _getRateForRisk(String risk) {
     if (_selectedZone == null) return 0.0;
     return FireInsuranceModel.ratesTable[_selectedZone]?[risk] ?? 0.0;
-  }
-
-  void _applyPreset(CalculatorPreset preset) {
-    setState(() {
-      _sumController.text = preset.values['sum'] ?? '';
-      _selectedZone = preset.values['zone'];
-      _selectedRisksMap.clear();
-      final List<dynamic> risks = preset.values['risks'] ?? [];
-      for (final r in _allRisks) {
-        _selectedRisksMap[r] = risks.contains(r);
-      }
-    });
-    _recalculateLive();
   }
 
   void _resetForm() {
@@ -105,14 +87,16 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
     }
   }
 
-  List<ResultSection> _buildSections(List<String> selectedRisks, Map<String, double> riskPremiums, dynamic totalRate) {
+  List<ResultSection> _buildSections(List<String> selectedRisks,
+      Map<String, double> riskPremiums, dynamic totalRate) {
     return [
       ResultSection("Property Details", {
         "Zone": _selectedZone ?? 'N/A',
       }),
       ResultSection("Selected Risks", {
         for (var risk in selectedRisks)
-          risk: "${_getRateForRisk(risk)}% (BDT ${NumberFormat("#,##0", "en_US").format(riskPremiums[risk] ?? 0)})",
+          risk:
+              "${_getRateForRisk(risk)}% (BDT ${NumberFormat("#,##0", "en_US").format(riskPremiums[risk] ?? 0)})",
       }),
       ResultSection("Summary", {
         "Total Rate": "$totalRate%",
@@ -127,7 +111,8 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
     Map<String, dynamic> result,
   ) {
     final riskBreakdown = selectedRisks
-        .map((r) => "$r (${_getRateForRisk(r)}%) - BDT ${NumberFormat("#,##0", "en_US").format(riskPremiums[r] ?? 0)}")
+        .map((r) =>
+            "$r (${_getRateForRisk(r)}%) - BDT ${NumberFormat("#,##0", "en_US").format(riskPremiums[r] ?? 0)}")
         .join(', ');
 
     return {
@@ -135,8 +120,10 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
       'Zone': _selectedZone ?? '',
       'Selected Risks': riskBreakdown,
       'Total Rate': "${result['totalRate']}%",
-      'Net Premium': "BDT ${NumberFormat("#,##0", "en_US").format(result['netPremium'])}",
-      'VAT (15%)': "BDT ${NumberFormat("#,##0", "en_US").format(result['vat'])}",
+      'Net Premium':
+          "BDT ${NumberFormat("#,##0", "en_US").format(result['netPremium'])}",
+      'VAT (15%)':
+          "BDT ${NumberFormat("#,##0", "en_US").format(result['vat'])}",
     };
   }
 
@@ -145,7 +132,8 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
     if (_currentResult == null) {
       final messenger = scaffoldMessengerKey.currentState;
       messenger?.showSnackBar(
-        const SnackBar(content: Text("Invalid input. Please check your values.")),
+        const SnackBar(
+            content: Text("Invalid input. Please check your values.")),
       );
       return;
     }
@@ -154,9 +142,11 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
       final cleanSum = _sumController.text.replaceAll(',', '').trim();
       double insuredSum = double.parse(cleanSum);
       final selectedRisks = _selectedRisks;
-      final riskPremiums = (_currentResult!['riskPremiums'] as Map<String, double>?) ?? {};
+      final riskPremiums =
+          (_currentResult!['riskPremiums'] as Map<String, double>?) ?? {};
 
-      final details = _buildExportDetails(insuredSum, selectedRisks, riskPremiums, _currentResult!);
+      final details = _buildExportDetails(
+          insuredSum, selectedRisks, riskPremiums, _currentResult!);
 
       final historyItem = CalculationHistoryItem(
         date: DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now()),
@@ -175,7 +165,8 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
           vat: _currentResult!['vat'],
           totalPremium: _currentResult!['totalPremium'],
           insuredSum: insuredSum,
-          sections: _buildSections(selectedRisks, riskPremiums, _currentResult!['totalRate']),
+          sections: _buildSections(
+              selectedRisks, riskPremiums, _currentResult!['totalRate']),
           exportDetails: details,
         ),
       );
@@ -185,8 +176,8 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = widget.isEmbeddedInDesktop || screenWidth >= 850;
+    final shortestSide = MediaQuery.sizeOf(context).shortestSide;
+    final isDesktop = widget.isEmbeddedInDesktop || shortestSide >= 600;
 
     final formContent = _buildFormContent(theme, isDesktop);
 
@@ -211,7 +202,9 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
           ? _buildDesktopLayout(theme, formContent)
           : SingleChildScrollView(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom +
+                    MediaQuery.of(context).padding.bottom +
+                    24,
                 left: 24.0,
                 right: 24.0,
                 top: 20.0,
@@ -219,15 +212,23 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildPresetsBar(theme),
-                  const SizedBox(height: 24),
                   formContent,
                   const SizedBox(height: 40),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
                       onPressed: _isFormValid ? _calculateAndShowModal : null,
-                      child: const Text("Calculate Premium"),
+                      child: const Text("Calculate Premium",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -238,12 +239,14 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
 
   Widget _buildDesktopLayout(ThemeData theme, Widget formContent) {
     final selectedRisks = _selectedRisks;
-    final riskPremiums = (_currentResult?['riskPremiums'] as Map<String, double>?) ?? {};
+    final riskPremiums =
+        (_currentResult?['riskPremiums'] as Map<String, double>?) ?? {};
     final totalRate = _currentResult?['totalRate'] ?? 0.0;
 
     final sections = _buildSections(selectedRisks, riskPremiums, totalRate);
     final exportDetails = _currentResult != null
-        ? _buildExportDetails(_currentInsuredSum, selectedRisks, riskPremiums, _currentResult!)
+        ? _buildExportDetails(
+            _currentInsuredSum, selectedRisks, riskPremiums, _currentResult!)
         : <String, dynamic>{};
 
     return SingleChildScrollView(
@@ -254,8 +257,6 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildPresetsBar(theme),
-              const SizedBox(height: 24),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -301,50 +302,6 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
     );
   }
 
-  Widget _buildPresetsBar(ThemeData theme) {
-    final presets = CalculatorRegistry.firePresets;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.flash_on, size: 16, color: theme.colorScheme.primary),
-            const SizedBox(width: 6),
-            Text(
-              "QUICK PRESETS",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                color: theme.colorScheme.primary,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: presets.map((p) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: ActionChip(
-                  avatar: Icon(p.icon, size: 16, color: theme.colorScheme.primary),
-                  label: Text(p.label),
-                  tooltip: p.description,
-                  onPressed: () => _applyPreset(p),
-                  backgroundColor: theme.colorScheme.primary.withAlpha(15),
-                  side: BorderSide(color: theme.colorScheme.primary.withAlpha(50)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildFormContent(ThemeData theme, bool isDesktop) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,7 +311,7 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
         CustomTextField(
           controller: _sumController,
           labelText: "Sum Insured (Tk)",
-          hintText: "e.g. 20,000,000",
+          hintText: "Enter sum insured",
           prefixIcon: Icons.account_balance_wallet,
           onChanged: (_) {
             setState(() {});
@@ -378,6 +335,7 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
           },
           labelText: "Territory / Zone",
           icon: Icons.location_on_outlined,
+          hintText: "Select a zone",
         ),
         const SizedBox(height: 20),
         if (_selectedZone != null) ...[

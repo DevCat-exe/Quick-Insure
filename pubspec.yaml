@@ -19,7 +19,9 @@ dependencies:
   package_info_plus: ^9.0.0
   url_launcher: ^6.1.11
   github: ^9.13.0
-  flutter_markdown_plus: ^1.0.7 # Replaces flutter_markdown
+  flutter_markdown_plus: ^1.0.7
+  path_provider: ^2.1.1
+  open_filex: ^4.7.0 # Replaces flutter_markdown
 
 dev_dependencies:
   flutter_test:
@@ -34,10 +36,14 @@ flutter_native_splash:
   android: true
   ios: true
 
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon.png"
+  windows:
+    generate: true
+    image_path: "assets/icon.png"
+    icon_size: 256
 
 flutter:
   assets:

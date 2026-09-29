@@ -1,0 +1,179 @@
+name: Build and publish release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag to publish, for example v2.2.1-test.1
+        required: true
+        default: v2.2.1-test.1
+        type: string
+      prerelease:
+        description: Mark this release as a prerelease
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve release version
+        id: release
+        shell: pwsh
+        env:
+          INPUT_RELEASE_TAG: ${{ inputs.release_tag }}
+          INPUT_PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          if ($env:GITHUB_EVENT_NAME -eq 'push') {
+            $tag = $env:GITHUB_REF_NAME
+          } else {
+            $tag = $env:INPUT_RELEASE_TAG
+          }
+
+          if ($tag -notmatch '^v?(\d+)\.(\d+)\.(\d+)([-+].*)?$') {
+            throw "Release tag must use semantic versioning, received: $tag"
+          }
+
+          $version = "$($Matches[1]).$($Matches[2]).$($Matches[3])"
+          $buildNumber = ([long]$Matches[1] * 1000000) + ([long]$Matches[2] * 1000) + [long]$Matches[3]
+          $isPrerelease = $tag.Contains('-')
+          if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
+            $isPrerelease = $env:INPUT_PRERELEASE -eq 'true'
+          }
+          $assetTag = $tag -replace '[^0-9A-Za-z.-]', '_'
+
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "asset_tag=$assetTag" >> $env:GITHUB_OUTPUT
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "build_number=$buildNumber" >> $env:GITHUB_OUTPUT
+          "prerelease=$($isPrerelease.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+
+      - name: Recreate Android signing files from secrets
+        shell: pwsh
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          $requiredSecrets = @(
+            $env:ANDROID_KEYSTORE_BASE64,
+            $env:ANDROID_KEYSTORE_PASSWORD,
+            $env:ANDROID_KEY_ALIAS,
+            $env:ANDROID_KEY_PASSWORD
+          )
+          if ($requiredSecrets | Where-Object { [string]::IsNullOrWhiteSpace($_) }) {
+            throw 'One or more Android signing secrets are missing.'
+          }
+
+          $keystorePath = 'android/app/quickinsure.keystore'
+          [System.IO.File]::WriteAllBytes(
+            $keystorePath,
+            [System.Convert]::FromBase64String($env:ANDROID_KEYSTORE_BASE64)
+          )
+
+          $properties = @"
+          storePassword=$($env:ANDROID_KEYSTORE_PASSWORD)
+          keyPassword=$($env:ANDROID_KEY_PASSWORD)
+          keyAlias=$($env:ANDROID_KEY_ALIAS)
+          storeFile=quickinsure.keystore
+          "@
+          $propertiesPath = 'android/app/key.properties'
+          [System.IO.File]::WriteAllText(
+            $propertiesPath,
+            $properties.Trim() + "`n",
+            [System.Text.UTF8Encoding]::new($false)
+          )
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build update-test baseline clients
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        env:
+          TEST_RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          $pubspec = Get-Content pubspec.yaml -Raw
+          if ($pubspec -notmatch '(?m)^version:\s*(\d+\.\d+\.\d+)\+(\d+)') {
+            throw 'Could not read the current app version from pubspec.yaml.'
+          }
+          $baselineVersion = $Matches[1]
+          $baselineBuild = [int]$Matches[2] + 1
+          $testDefine = "--dart-define=QUICK_INSURE_TEST_RELEASE_TAG=$env:TEST_RELEASE_TAG"
+          $testClients = 'build/update-test-clients'
+          New-Item -ItemType Directory -Path $testClients -Force | Out-Null
+
+          flutter build apk --release "--build-name=$baselineVersion" "--build-number=$baselineBuild" $testDefine
+          Copy-Item 'build/app/outputs/flutter-apk/app-release.apk' "$testClients/quick_insure_update_test_client.apk"
+
+          flutter build windows --release "--build-name=$baselineVersion" "--build-number=$baselineBuild" $testDefine
+          $windowsRelease = 'build/windows/x64/runner/Release'
+          Compress-Archive -Path "$windowsRelease/*" -DestinationPath "$testClients/quick_insure_windows_update_test_client.zip" -CompressionLevel Optimal
+
+      - name: Upload update-test baseline clients
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: quick-insure-update-test-clients
+          path: build/update-test-clients/*
+          retention-days: 7
+
+      - name: Build signed Android APK
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_BUILD_NUMBER: ${{ steps.release.outputs.build_number }}
+        run: flutter build apk --release "--build-name=$env:RELEASE_VERSION" "--build-number=$env:RELEASE_BUILD_NUMBER"
+
+      - name: Build Windows desktop bundle
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_BUILD_NUMBER: ${{ steps.release.outputs.build_number }}
+        run: flutter build windows --release "--build-name=$env:RELEASE_VERSION" "--build-number=$env:RELEASE_BUILD_NUMBER"
+
+      - name: Package release assets
+        shell: pwsh
+        env:
+          ASSET_TAG: ${{ steps.release.outputs.asset_tag }}
+        run: |
+          $releaseDirectory = 'build/release-assets'
+          New-Item -ItemType Directory -Path $releaseDirectory -Force | Out-Null
+          Copy-Item 'build/app/outputs/flutter-apk/app-release.apk' "$releaseDirectory/quick_insure_$env:ASSET_TAG.apk"
+          Compress-Archive -Path 'build/windows/x64/runner/Release/*' -DestinationPath "$releaseDirectory/quick_insure_windows_$env:ASSET_TAG.zip" -CompressionLevel Optimal
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: Quick Insure ${{ steps.release.outputs.tag }}
+          generate_release_notes: true
+          prerelease: ${{ steps.release.outputs.prerelease == 'true' }}
+          files: |
+            build/release-assets/quick_insure_${{ steps.release.outputs.asset_tag }}.apk
+            build/release-assets/quick_insure_windows_${{ steps.release.outputs.asset_tag }}.zip

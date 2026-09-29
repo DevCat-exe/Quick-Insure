@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CalculationHistoryItem {
@@ -20,6 +21,54 @@ class CalculationHistoryItem {
         'totalPremium': totalPremium,
         'details': details,
       };
+
+  bool matchesSearch(String query) {
+    final rawQuery = query.trim().toLowerCase();
+    if (rawQuery.isEmpty) return true;
+
+    final normalizedQuery = _normalizeSearchText(rawQuery);
+    final formattedPremium =
+        NumberFormat('#,##0', 'en_US').format(totalPremium);
+    final values = [
+      type,
+      date,
+      ..._dateSearchAliases(),
+      totalPremium.toString(),
+      formattedPremium,
+      'BDT $formattedPremium',
+      ...details.entries.expand((entry) => [entry.key, entry.value.toString()]),
+    ];
+
+    return values.any((value) {
+      final lowerValue = value.toLowerCase();
+      if (lowerValue.contains(rawQuery)) return true;
+      return normalizedQuery.isNotEmpty &&
+          _normalizeSearchText(lowerValue).contains(normalizedQuery);
+    });
+  }
+
+  List<String> _dateSearchAliases() {
+    try {
+      final parsedDate =
+          DateFormat('dd MMM yyyy, hh:mm a', 'en_US').parseStrict(date);
+      return [
+        DateFormat('d/M/yy').format(parsedDate),
+        DateFormat('dd/MM/yy').format(parsedDate),
+        DateFormat('d/M/yyyy').format(parsedDate),
+        DateFormat('dd/MM/yyyy').format(parsedDate),
+        DateFormat('d MMM yyyy', 'en_US').format(parsedDate),
+        DateFormat('d MMMM yyyy', 'en_US').format(parsedDate),
+        DateFormat('yyyy-MM-dd').format(parsedDate),
+      ];
+    } on FormatException {
+      return const [];
+    }
+  }
+
+  static String _normalizeSearchText(String value) {
+    final normalized = value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    return normalized.replaceAll('september', 'sep').replaceAll('sept', 'sep');
+  }
 
   factory CalculationHistoryItem.fromJson(Map<String, dynamic> json) =>
       CalculationHistoryItem(

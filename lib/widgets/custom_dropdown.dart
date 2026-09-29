@@ -6,6 +6,7 @@ class CustomDropdown extends StatelessWidget {
   final Function(String?)? onChanged;
   final String labelText;
   final IconData icon;
+  final String? hintText;
 
   const CustomDropdown({
     super.key,
@@ -14,6 +15,7 @@ class CustomDropdown extends StatelessWidget {
     required this.onChanged,
     required this.labelText,
     required this.icon,
+    this.hintText,
   });
 
   @override
@@ -23,9 +25,15 @@ class CustomDropdown extends StatelessWidget {
       items: items.map((item) {
         return DropdownMenuItem(
           value: item,
-          child: Text(item),
+          child: Text(
+            item.isEmpty ? hintText ?? '' : item,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         );
       }).toList(),
+      hint: hintText == null ? null : Text(hintText!),
+      isExpanded: true,
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: labelText,

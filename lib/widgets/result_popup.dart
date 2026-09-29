@@ -37,7 +37,7 @@ class ResultPopup extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 380;
     final isMediumScreen = screenWidth < 480;
-    
+
     final double headerFontSize = isSmallScreen ? 20 : 24;
 
     return Dialog(
@@ -68,7 +68,7 @@ class ResultPopup extends StatelessWidget {
                 // Header with Gradient
                 Container(
                   padding: EdgeInsets.symmetric(
-                    vertical: isSmallScreen ? 20 : 28, 
+                    vertical: isSmallScreen ? 20 : 28,
                     horizontal: isSmallScreen ? 16 : 24,
                   ),
                   width: double.infinity,
@@ -85,7 +85,7 @@ class ResultPopup extends StatelessWidget {
                           color: Colors.white, size: isSmallScreen ? 40 : 48),
                       SizedBox(height: isSmallScreen ? 10 : 16),
                       Text(
-                        "Calculation Details",
+                        title,
                         style: TextStyle(
                           fontSize: headerFontSize,
                           fontWeight: FontWeight.w900,
@@ -107,7 +107,8 @@ class ResultPopup extends StatelessWidget {
                         SizedBox(height: isSmallScreen ? 8 : 12),
                         for (var item in section.items.entries)
                           if (item.value.isNotEmpty)
-                            _buildResultRow(item.key, item.value, theme, isSmallScreen: isSmallScreen),
+                            _buildResultRow(item.key, item.value, theme,
+                                isSmallScreen: isSmallScreen),
                         SizedBox(height: isSmallScreen ? 16 : 24),
                       ],
                       Divider(color: theme.dividerColor.withAlpha(40)),
@@ -134,7 +135,7 @@ class ResultPopup extends StatelessWidget {
                       Container(
                         width: double.infinity,
                         padding: EdgeInsets.symmetric(
-                            vertical: isSmallScreen ? 12 : 16, 
+                            vertical: isSmallScreen ? 12 : 16,
                             horizontal: isSmallScreen ? 14 : 20),
                         decoration: BoxDecoration(
                           color: accent.withAlpha(15),
@@ -172,12 +173,14 @@ class ResultPopup extends StatelessWidget {
                               label: const Text("Export PDF"),
                               icon: const Icon(Icons.picture_as_pdf, size: 18),
                               style: OutlinedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 14 : 20),
+                                padding: EdgeInsets.symmetric(
+                                    vertical: isSmallScreen ? 14 : 20),
                                 side: BorderSide(
                                     color: theme.colorScheme.primary),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
+                                foregroundColor: theme.colorScheme.primary,
                               ),
                               onPressed: () => ExportService.exportToPdf(
                                 title: title,
@@ -190,7 +193,13 @@ class ResultPopup extends StatelessWidget {
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 14 : 20),
+                                padding: EdgeInsets.symmetric(
+                                    vertical: isSmallScreen ? 14 : 20),
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                               ),
                               onPressed: () => Navigator.pop(context),
                               child: const Text("Done"),
@@ -221,13 +230,43 @@ class ResultPopup extends StatelessWidget {
     );
   }
 
-  Widget _buildResultRow(String label, String value, ThemeData theme, {required bool isSmallScreen}) {
+  Widget _buildResultRow(String label, String value, ThemeData theme,
+      {required bool isSmallScreen}) {
+    if (label == 'Registration Number') {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.textTheme.bodyMedium?.color?.withAlpha(170),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.secondary,
+              ),
+              softWrap: true,
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: theme.textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 13 : null)),
+          Text(label,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(fontSize: isSmallScreen ? 13 : null)),
           Flexible(
             child: Text(
               value,
@@ -246,14 +285,14 @@ class ResultPopup extends StatelessWidget {
   }
 
   Widget _buildPremiumRow(String label, String value, ThemeData theme,
-      {required bool isBold, bool highlight = false, required bool isSmallScreen}) {
-    final double labelFontSize = highlight 
-        ? (isSmallScreen ? 16 : 18) 
-        : (isSmallScreen ? 14 : 16);
-    final double valueFontSize = highlight 
-        ? (isSmallScreen ? 18 : 20) 
-        : (isSmallScreen ? 14 : 16);
-    
+      {required bool isBold,
+      bool highlight = false,
+      required bool isSmallScreen}) {
+    final double labelFontSize =
+        highlight ? (isSmallScreen ? 16 : 18) : (isSmallScreen ? 14 : 16);
+    final double valueFontSize =
+        highlight ? (isSmallScreen ? 18 : 20) : (isSmallScreen ? 14 : 16);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(

@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "quick_insure" "\0"
+            VALUE "CompanyName", "DevCat" "\0"
+            VALUE "FileDescription", "Quick Insure" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "quick_insure" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
+            VALUE "InternalName", "Quick Insure" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 DevCat" "\0"
             VALUE "OriginalFilename", "quick_insure.exe" "\0"
-            VALUE "ProductName", "quick_insure" "\0"
+            VALUE "ProductName", "Quick Insure" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

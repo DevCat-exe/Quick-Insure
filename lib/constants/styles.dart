@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AppStyles {
@@ -44,7 +45,9 @@ class AppStyles {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: colorScheme,
-      fontFamily: 'Roboto',
+      fontFamily: defaultTargetPlatform == TargetPlatform.windows
+          ? 'Segoe UI'
+          : 'Roboto',
       scaffoldBackgroundColor: isDark ? darkPrimary : scaffoldBackgroundColor,
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,

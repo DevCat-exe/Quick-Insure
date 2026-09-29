@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../models/motor_insurance_model.dart';
-import '../models/calculator_registry.dart';
 import '../widgets/result_popup.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_dropdown.dart';
@@ -21,31 +21,57 @@ class MotorInsuranceCalculator extends StatefulWidget {
 }
 
 class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
-  final TextEditingController _sumController = TextEditingController(text: "1500000");
-  final TextEditingController _passengersController = TextEditingController(text: "4");
-  final TextEditingController _driversController = TextEditingController(text: "1");
-  final TextEditingController _engineCapacityController = TextEditingController(text: "1500");
+  final TextEditingController _sumController = TextEditingController();
+  final TextEditingController _passengersController = TextEditingController();
+  final TextEditingController _driversController = TextEditingController();
+  final TextEditingController _engineCapacityController =
+      TextEditingController();
+  final TextEditingController _registrationSuffixController =
+      TextEditingController();
 
-  String _riskFactor = "2.65";
-  String _discount = "0%";
-  String _ncb = "0%";
-  bool _isFormValid = true;
+  static const List<String> _registrationZones = [
+    'DHAKA-METRO',
+    'CHATTA-METRO',
+  ];
+  static final RegExp _registrationSuffixPattern =
+      RegExp(r'^[A-Z]{2,3}-\d{2}-\d{4}$');
+
+  String _riskFactor = "";
+  String _discount = "";
+  String _ncb = "";
+  String _registrationZone = 'DHAKA-METRO';
+  bool _isFormValid = false;
 
   // Live calculation results
   Map<String, dynamic>? _currentResult;
-  double _currentInsuredSum = 1500000;
+  double _currentInsuredSum = 0;
+
+  String get _registrationNumber =>
+      '$_registrationZone-${_registrationSuffixController.text.trim()}';
+
+  bool get _registrationIsValid =>
+      _registrationSuffixController.text.isEmpty ||
+      _registrationSuffixPattern.hasMatch(_registrationSuffixController.text);
 
   @override
-  void initState() {
-    super.initState();
-    _recalculateLive();
+  void dispose() {
+    _sumController.dispose();
+    _passengersController.dispose();
+    _driversController.dispose();
+    _engineCapacityController.dispose();
+    _registrationSuffixController.dispose();
+    super.dispose();
   }
 
   void _checkFormValidity() {
     final valid = _sumController.text.trim().isNotEmpty &&
         _passengersController.text.trim().isNotEmpty &&
         _driversController.text.trim().isNotEmpty &&
-        _engineCapacityController.text.trim().isNotEmpty;
+        _engineCapacityController.text.trim().isNotEmpty &&
+        _riskFactor.isNotEmpty &&
+        _discount.isNotEmpty &&
+        _ncb.isNotEmpty &&
+        _registrationIsValid;
 
     if (valid != _isFormValid) {
       setState(() {
@@ -61,28 +87,18 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
     }
   }
 
-  void _applyPreset(CalculatorPreset preset) {
-    setState(() {
-      _sumController.text = preset.values['sum'] ?? '';
-      _engineCapacityController.text = preset.values['cc'] ?? '';
-      _passengersController.text = preset.values['passengers'] ?? '';
-      _driversController.text = preset.values['drivers'] ?? '';
-      _riskFactor = preset.values['risk'] ?? _riskFactor;
-      _discount = preset.values['discount'] ?? _discount;
-      _ncb = preset.values['ncb'] ?? _ncb;
-    });
-    _checkFormValidity();
-  }
-
   void _resetForm() {
     setState(() {
       _sumController.clear();
-      _passengersController.text = "0";
-      _driversController.text = "1";
+      _passengersController.clear();
+      _driversController.clear();
       _engineCapacityController.clear();
-      _riskFactor = "2.65";
-      _discount = "0%";
-      _ncb = "0%";
+      _registrationSuffixController.clear();
+      _registrationZone = 'DHAKA-METRO';
+      _riskFactor = "";
+      _discount = "";
+      _ncb = "";
+      _currentInsuredSum = 0;
       _isFormValid = false;
       _currentResult = null;
     });
@@ -120,13 +136,21 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
     }
   }
 
-  List<ResultSection> _buildSections(int engineCC, int passengers, int drivers, double riskFactor, double discount, double ncb) {
+  List<ResultSection> _buildSections(
+      int engineCC,
+      int passengers,
+      int drivers,
+      double riskFactor,
+      double discount,
+      double ncb,
+      String registrationNumber) {
     return [
       ResultSection("Vehicle Information", {
         "Engine Capacity": "$engineCC cc",
         "Passengers": "$passengers",
         "Drivers": "$drivers",
         "Seating Capacity": "${passengers + drivers}",
+        "Registration Number": registrationNumber,
       }),
       ResultSection("Risk & Discounts", {
         "Risk Factor": "$riskFactor",
@@ -145,16 +169,20 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
     double discount,
     double ncb,
     Map<String, dynamic> result,
+    String registrationNumber,
   ) {
     return {
       'Insured Sum': "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
+      'Registration Number': registrationNumber,
       'Engine CC': "$engineCC cc",
       'Seating Capacity': "${passengers + drivers}",
       'Risk Factor': "$riskFactor",
       'Discount': "$discount%",
       'NCB': "$ncb%",
-      'Net Premium': "BDT ${NumberFormat("#,##0", "en_US").format(result['netPremium'])}",
-      'VAT (15%)': "BDT ${NumberFormat("#,##0", "en_US").format(result['vat'])}",
+      'Net Premium':
+          "BDT ${NumberFormat("#,##0", "en_US").format(result['netPremium'])}",
+      'VAT (15%)':
+          "BDT ${NumberFormat("#,##0", "en_US").format(result['vat'])}",
     };
   }
 
@@ -163,7 +191,8 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
     if (_currentResult == null) {
       final messenger = scaffoldMessengerKey.currentState;
       messenger?.showSnackBar(
-        const SnackBar(content: Text("Invalid input. Please check your values.")),
+        const SnackBar(
+            content: Text("Invalid input. Please check your values.")),
       );
       return;
     }
@@ -178,7 +207,17 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
       int drivers = int.parse(_driversController.text.trim());
       int engineCC = int.parse(_engineCapacityController.text.trim());
 
-      final details = _buildExportDetails(insuredSum, engineCC, passengers, drivers, riskFactor, discount, ncb, _currentResult!);
+      final details = _buildExportDetails(
+        insuredSum,
+        engineCC,
+        passengers,
+        drivers,
+        riskFactor,
+        discount,
+        ncb,
+        _currentResult!,
+        _registrationNumber,
+      );
 
       final historyItem = CalculationHistoryItem(
         date: DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now()),
@@ -197,7 +236,15 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
           vat: _currentResult!['vat'],
           totalPremium: _currentResult!['totalPremium'],
           insuredSum: insuredSum,
-          sections: _buildSections(engineCC, passengers, drivers, riskFactor, discount, ncb),
+          sections: _buildSections(
+            engineCC,
+            passengers,
+            drivers,
+            riskFactor,
+            discount,
+            ncb,
+            _registrationNumber,
+          ),
           exportDetails: details,
         ),
       );
@@ -207,8 +254,8 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = widget.isEmbeddedInDesktop || screenWidth >= 850;
+    final shortestSide = MediaQuery.sizeOf(context).shortestSide;
+    final isDesktop = widget.isEmbeddedInDesktop || shortestSide >= 600;
 
     final formContent = _buildFormContent(theme, isDesktop);
 
@@ -233,7 +280,9 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
           ? _buildDesktopLayout(theme, formContent)
           : SingleChildScrollView(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom +
+                    MediaQuery.of(context).padding.bottom +
+                    24,
                 left: 24.0,
                 right: 24.0,
                 top: 20.0,
@@ -241,15 +290,23 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildPresetsBar(theme),
-                  const SizedBox(height: 24),
                   formContent,
                   const SizedBox(height: 40),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
                       onPressed: _isFormValid ? _calculateAndShowModal : null,
-                      child: const Text("Calculate Premium"),
+                      child: const Text("Calculate Premium",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -266,9 +323,27 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
     double discount = double.tryParse(_discount.replaceAll('%', '')) ?? 0;
     double ncb = double.tryParse(_ncb.replaceAll('%', '')) ?? 0;
 
-    final sections = _buildSections(engineCC, passengers, drivers, riskFactor, discount, ncb);
+    final sections = _buildSections(
+      engineCC,
+      passengers,
+      drivers,
+      riskFactor,
+      discount,
+      ncb,
+      _registrationNumber,
+    );
     final exportDetails = _currentResult != null
-        ? _buildExportDetails(_currentInsuredSum, engineCC, passengers, drivers, riskFactor, discount, ncb, _currentResult!)
+        ? _buildExportDetails(
+            _currentInsuredSum,
+            engineCC,
+            passengers,
+            drivers,
+            riskFactor,
+            discount,
+            ncb,
+            _currentResult!,
+            _registrationNumber,
+          )
         : <String, dynamic>{};
 
     return SingleChildScrollView(
@@ -279,8 +354,6 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildPresetsBar(theme),
-              const SizedBox(height: 24),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -326,50 +399,6 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
     );
   }
 
-  Widget _buildPresetsBar(ThemeData theme) {
-    final presets = CalculatorRegistry.motorPresets;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.flash_on, size: 16, color: theme.colorScheme.primary),
-            const SizedBox(width: 6),
-            Text(
-              "QUICK PRESETS",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                color: theme.colorScheme.primary,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: presets.map((p) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: ActionChip(
-                  avatar: Icon(p.icon, size: 16, color: theme.colorScheme.primary),
-                  label: Text(p.label),
-                  tooltip: p.description,
-                  onPressed: () => _applyPreset(p),
-                  backgroundColor: theme.colorScheme.primary.withAlpha(15),
-                  side: BorderSide(color: theme.colorScheme.primary.withAlpha(50)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildFormContent(ThemeData theme, bool isDesktop) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,7 +408,7 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
         CustomTextField(
           controller: _sumController,
           labelText: "Insured Sum (Tk)",
-          hintText: "e.g. 1,500,000",
+          hintText: "Enter insured sum",
           prefixIcon: Icons.account_balance_wallet,
           onChanged: (_) => _checkFormValidity(),
           keyboardType: TextInputType.number,
@@ -388,45 +417,64 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
         CustomTextField(
           controller: _engineCapacityController,
           labelText: "Engine Capacity (cc)",
-          hintText: "e.g. 1500",
+          hintText: "Enter engine capacity",
           prefixIcon: Icons.settings_input_component,
           onChanged: (_) => _checkFormValidity(),
           keyboardType: TextInputType.number,
         ),
+        const SizedBox(height: 16),
+        _buildResponsivePair(
+          first: CustomDropdown(
+            value: _registrationZone,
+            items: _registrationZones,
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => _registrationZone = value);
+                _checkFormValidity();
+              }
+            },
+            labelText: "Registration Zone",
+            icon: Icons.location_city_outlined,
+          ),
+          second: CustomTextField(
+            controller: _registrationSuffixController,
+            labelText: "Registration Number (optional)",
+            hintText: "KHA-12-0705",
+            prefixIcon: Icons.directions_car_outlined,
+            inputFormatters: const [_RegistrationSuffixFormatter()],
+            textInputAction: TextInputAction.done,
+            onChanged: (_) => _checkFormValidity(),
+            keyboardType: TextInputType.text,
+            textCapitalization: TextCapitalization.characters,
+          ),
+        ),
         const SizedBox(height: 28),
         _buildSectionHeader(theme, "Passengers & Drivers"),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: CustomTextField(
-                controller: _passengersController,
-                labelText: "Passengers",
-                hintText: "0",
-                prefixIcon: Icons.people_outline,
-                onChanged: (_) => _checkFormValidity(),
-                keyboardType: TextInputType.number,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: CustomTextField(
-                controller: _driversController,
-                labelText: "Drivers",
-                hintText: "1",
-                prefixIcon: Icons.person_outline,
-                onChanged: (_) => _checkFormValidity(),
-                keyboardType: TextInputType.number,
-              ),
-            ),
-          ],
+        _buildResponsivePair(
+          first: CustomTextField(
+            controller: _passengersController,
+            labelText: "Passengers",
+            hintText: "Enter passenger count",
+            prefixIcon: Icons.people_outline,
+            onChanged: (_) => _checkFormValidity(),
+            keyboardType: TextInputType.number,
+          ),
+          second: CustomTextField(
+            controller: _driversController,
+            labelText: "Drivers",
+            hintText: "Enter driver count",
+            prefixIcon: Icons.person_outline,
+            onChanged: (_) => _checkFormValidity(),
+            keyboardType: TextInputType.number,
+          ),
         ),
         const SizedBox(height: 28),
         _buildSectionHeader(theme, "Risk & Discounts"),
         const SizedBox(height: 16),
         CustomDropdown(
           value: _riskFactor,
-          items: const ["2.65", "2.40", "2.15"],
+          items: const ["", "2.65", "2.40", "2.15"],
           onChanged: (value) {
             if (value != null) {
               setState(() => _riskFactor = value);
@@ -435,42 +483,66 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
           },
           labelText: "Risk Factor (%)",
           icon: Icons.analytics_outlined,
+          hintText: "Select a risk factor",
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: CustomDropdown(
-                value: _discount,
-                items: const ["0%", "10%", "20%", "30%"],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _discount = value);
-                    _checkFormValidity();
-                  }
-                },
-                labelText: "Special Discount",
-                icon: Icons.percent,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: CustomDropdown(
-                value: _ncb,
-                items: const ["0%", "30%", "40%", "50%"],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _ncb = value);
-                    _checkFormValidity();
-                  }
-                },
-                labelText: "NCB (No Claim Bonus)",
-                icon: Icons.stars_outlined,
-              ),
-            ),
-          ],
+        _buildResponsivePair(
+          first: CustomDropdown(
+            value: _discount,
+            items: const ["", "0%", "10%", "20%", "30%"],
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => _discount = value);
+                _checkFormValidity();
+              }
+            },
+            labelText: "Special Discount",
+            icon: Icons.percent,
+            hintText: "Select discount",
+          ),
+          second: CustomDropdown(
+            value: _ncb,
+            items: const ["", "0%", "30%", "40%", "50%"],
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => _ncb = value);
+                _checkFormValidity();
+              }
+            },
+            labelText: "NCB (No Claim Bonus)",
+            icon: Icons.stars_outlined,
+            hintText: "Select NCB",
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildResponsivePair({
+    required Widget first,
+    required Widget second,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textScale = MediaQuery.textScalerOf(context).scale(1);
+        if (constraints.maxWidth < 520 * textScale) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              first,
+              const SizedBox(height: 16),
+              second,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: first),
+            const SizedBox(width: 16),
+            Expanded(child: second),
+          ],
+        );
+      },
     );
   }
 
@@ -484,5 +556,74 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
         letterSpacing: 1.5,
       ),
     );
+  }
+}
+
+class _RegistrationSuffixFormatter extends TextInputFormatter {
+  const _RegistrationSuffixFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final formattedText = _format(_normalize(newValue.text));
+    final cursorOffset = newValue.selection.isValid
+        ? newValue.selection.extentOffset.clamp(0, newValue.text.length).toInt()
+        : newValue.text.length;
+    final formattedCursor = _format(
+      _normalize(newValue.text.substring(0, cursorOffset)),
+    ).length.clamp(0, formattedText.length).toInt();
+
+    return newValue.copyWith(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedCursor),
+      composing: TextRange.empty,
+    );
+  }
+
+  String _normalize(String value) {
+    final output = StringBuffer();
+    var letterCount = 0;
+    var digitCount = 0;
+    var digitsStarted = false;
+
+    for (final codeUnit in value.toUpperCase().codeUnits) {
+      if (!digitsStarted &&
+          letterCount < 3 &&
+          codeUnit >= 65 &&
+          codeUnit <= 90) {
+        output.writeCharCode(codeUnit);
+        letterCount++;
+      } else if (letterCount >= 2 &&
+          digitCount < 6 &&
+          codeUnit >= 48 &&
+          codeUnit <= 57) {
+        digitsStarted = true;
+        output.writeCharCode(codeUnit);
+        digitCount++;
+      }
+    }
+
+    return output.toString();
+  }
+
+  String _format(String compactValue) {
+    var classLength = 0;
+    while (classLength < compactValue.length) {
+      final codeUnit = compactValue.codeUnitAt(classLength);
+      if (codeUnit < 65 || codeUnit > 90) break;
+      classLength++;
+    }
+    if (classLength < 2) return compactValue;
+
+    final output = StringBuffer();
+    for (var index = 0; index < compactValue.length; index++) {
+      if (index == classLength || index == classLength + 2) {
+        output.write('-');
+      }
+      output.write(compactValue[index]);
+    }
+    return output.toString();
   }
 }

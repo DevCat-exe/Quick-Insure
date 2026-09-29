@@ -36,7 +36,9 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
   }
 
   double _parseBDT(String value) {
-    return double.tryParse(value.replaceAll('BDT', '').replaceAll(',', '').trim()) ?? 0;
+    return double.tryParse(
+            value.replaceAll('BDT', '').replaceAll(',', '').trim()) ??
+        0;
   }
 
   List<ResultSection> _buildSections(CalculationHistoryItem item) {
@@ -44,6 +46,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
     if (item.type == 'Motor Insurance') {
       return [
         ResultSection("Vehicle Details", {
+          if (details['Registration Number'] != null)
+            "Registration Number": details['Registration Number'].toString(),
           "Engine CC": details['Engine CC']?.toString() ?? '',
           "Seating Capacity": details['Seating Capacity']?.toString() ?? '',
         }),
@@ -61,7 +65,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
       for (final part in risksStr.split(', ')) {
         final trimmed = part.trim();
         if (trimmed.contains(' - BDT ')) {
-          final rateMatch = RegExp(r'^(.+?)\s*\(([\d.]+%)\)\s*-\s*BDT\s*(.+)$').firstMatch(trimmed);
+          final rateMatch = RegExp(r'^(.+?)\s*\(([\d.]+%)\)\s*-\s*BDT\s*(.+)$')
+              .firstMatch(trimmed);
           if (rateMatch != null) {
             final riskName = rateMatch.group(1)!.trim();
             final rate = rateMatch.group(2)!;
@@ -83,7 +88,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
       ];
     } else {
       return [
-        ResultSection("Details", details.map((k, v) => MapEntry(k, v.toString()))),
+        ResultSection(
+            "Details", details.map((k, v) => MapEntry(k, v.toString()))),
       ];
     }
   }
@@ -101,14 +107,29 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Clear All History"),
-        content: const Text("Are you sure you want to permanently delete all calculation records?"),
+        content: const Text(
+            "Are you sure you want to permanently delete all calculation records?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text("Cancel"),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.primary),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.primary,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(0, 36),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              visualDensity: VisualDensity.compact,
+              textStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text("Clear All"),
           ),
@@ -143,21 +164,14 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
           if (_selectedFilter != 'All' && item.type != _selectedFilter) {
             return false;
           }
-          if (_searchQuery.isNotEmpty) {
-            final query = _searchQuery.toLowerCase();
-            final matchesType = item.type.toLowerCase().contains(query);
-            final matchesDate = item.date.toLowerCase().contains(query);
-            final matchesTotal = item.totalPremium.toString().contains(query);
-            final matchesDetails = item.details.values.any((v) => v.toString().toLowerCase().contains(query));
-            return matchesType || matchesDate || matchesTotal || matchesDetails;
-          }
-          return true;
+          return item.matchesSearch(_searchQuery);
         }).toList();
 
         // Auto select first item if none selected
         if (_selectedItem == null && filteredItems.isNotEmpty) {
           _selectedItem = filteredItems.first;
-        } else if (_selectedItem != null && !filteredItems.contains(_selectedItem)) {
+        } else if (_selectedItem != null &&
+            !filteredItems.contains(_selectedItem)) {
           _selectedItem = filteredItems.isNotEmpty ? filteredItems.first : null;
         }
 
@@ -172,7 +186,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                   color: isDark ? Colors.black.withAlpha(50) : Colors.white,
                   border: Border(
                     right: BorderSide(
-                      color: isDark ? Colors.white10 : Colors.black.withAlpha(15),
+                      color:
+                          isDark ? Colors.white10 : Colors.black.withAlpha(15),
                     ),
                   ),
                 ),
@@ -195,7 +210,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                               ),
                               if (allItems.isNotEmpty)
                                 TextButton.icon(
-                                  icon: const Icon(Icons.delete_sweep, size: 18),
+                                  icon:
+                                      const Icon(Icons.delete_sweep, size: 18),
                                   label: const Text("Clear All"),
                                   style: TextButton.styleFrom(
                                     foregroundColor: primary,
@@ -209,7 +225,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                           // Search field
                           TextField(
                             controller: _searchController,
-                            onChanged: (val) => setState(() => _searchQuery = val),
+                            onChanged: (val) =>
+                                setState(() => _searchQuery = val),
                             decoration: InputDecoration(
                               hintText: "Search records, date, or sum...",
                               prefixIcon: const Icon(Icons.search, size: 20),
@@ -222,7 +239,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                                       },
                                     )
                                   : null,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -251,11 +269,15 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.history_outlined, size: 48, color: Colors.grey[400]),
+                                  Icon(Icons.history_outlined,
+                                      size: 48, color: Colors.grey[400]),
                                   const SizedBox(height: 12),
                                   Text(
-                                    allItems.isEmpty ? "No calculation history yet" : "No matching records found",
-                                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                                    allItems.isEmpty
+                                        ? "No calculation history yet"
+                                        : "No matching records found",
+                                    style: TextStyle(
+                                        color: Colors.grey[600], fontSize: 14),
                                   ),
                                 ],
                               ),
@@ -263,7 +285,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                           : ListView.separated(
                               padding: const EdgeInsets.all(12),
                               itemCount: filteredItems.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 8),
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 8),
                               itemBuilder: (context, index) {
                                 final item = filteredItems[index];
                                 final isSelected = item == _selectedItem;
@@ -272,12 +295,14 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                                   color: Colors.transparent,
                                   child: InkWell(
                                     borderRadius: BorderRadius.circular(16),
-                                    onTap: () => setState(() => _selectedItem = item),
+                                    onTap: () =>
+                                        setState(() => _selectedItem = item),
                                     child: Container(
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? primary.withAlpha(isDark ? 50 : 25)
+                                            ? primary
+                                                .withAlpha(isDark ? 50 : 25)
                                             : isDark
                                                 ? Colors.white.withAlpha(5)
                                                 : Colors.grey.withAlpha(12),
@@ -292,40 +317,56 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                                         ),
                                       ),
                                       child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Container(
                                             padding: const EdgeInsets.all(10),
                                             decoration: BoxDecoration(
-                                              color: (isMotor ? Colors.blue : Colors.orange).withAlpha(30),
-                                              borderRadius: BorderRadius.circular(12),
+                                              color: (isMotor
+                                                      ? Colors.blue
+                                                      : Colors.orange)
+                                                  .withAlpha(30),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                             child: Icon(
-                                              isMotor ? Icons.directions_car : Icons.local_fire_department,
-                                              color: isMotor ? Colors.blue : Colors.orange,
+                                              isMotor
+                                                  ? Icons.directions_car
+                                                  : Icons.local_fire_department,
+                                              color: isMotor
+                                                  ? Colors.blue
+                                                  : Colors.orange,
                                               size: 20,
                                             ),
                                           ),
                                           const SizedBox(width: 12),
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
                                                   children: [
                                                     Text(
                                                       item.type,
                                                       style: TextStyle(
-                                                        fontWeight: FontWeight.bold,
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                         fontSize: 14,
-                                                        color: isSelected ? primary : null,
+                                                        color: isSelected
+                                                            ? primary
+                                                            : null,
                                                       ),
                                                     ),
                                                     Text(
                                                       "BDT ${NumberFormat("#,##0", "en_US").format(item.totalPremium)}",
                                                       style: TextStyle(
-                                                        fontWeight: FontWeight.w900,
+                                                        fontWeight:
+                                                            FontWeight.w900,
                                                         fontSize: 14,
                                                         color: primary,
                                                       ),
@@ -340,13 +381,34 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                                                     color: Colors.grey[500],
                                                   ),
                                                 ),
-                                                if (item.details['Insured Sum'] != null) ...[
+                                                if (item.details[
+                                                        'Insured Sum'] !=
+                                                    null) ...[
                                                   const SizedBox(height: 4),
                                                   Text(
                                                     "Insured: ${item.details['Insured Sum']}",
                                                     style: TextStyle(
                                                       fontSize: 12,
-                                                      color: theme.textTheme.bodyMedium?.color?.withAlpha(180),
+                                                      color: theme.textTheme
+                                                          .bodyMedium?.color
+                                                          ?.withAlpha(180),
+                                                    ),
+                                                  ),
+                                                ],
+                                                if (item.details[
+                                                        'Registration Number'] !=
+                                                    null) ...[
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    "Reg: ${item.details['Registration Number']}",
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: theme.textTheme
+                                                          .bodyMedium?.color
+                                                          ?.withAlpha(180),
                                                     ),
                                                   ),
                                                 ],
@@ -355,9 +417,11 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                                           ),
                                           const SizedBox(width: 6),
                                           IconButton(
-                                            icon: const Icon(Icons.close, size: 16),
+                                            icon: const Icon(Icons.close,
+                                                size: 16),
                                             tooltip: "Delete",
-                                            visualDensity: VisualDensity.compact,
+                                            visualDensity:
+                                                VisualDensity.compact,
                                             onPressed: () => _deleteItem(item),
                                           ),
                                         ],
@@ -380,11 +444,13 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.description_outlined, size: 64, color: Colors.grey[400]),
+                          Icon(Icons.description_outlined,
+                              size: 64, color: Colors.grey[400]),
                           const SizedBox(height: 16),
                           Text(
                             "Select a calculation to inspect details",
-                            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                            style: TextStyle(
+                                fontSize: 16, color: Colors.grey[600]),
                           ),
                         ],
                       ),
@@ -475,7 +541,9 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
-                      item.type == 'Motor Insurance' ? Icons.directions_car : Icons.local_fire_department,
+                      item.type == 'Motor Insurance'
+                          ? Icons.directions_car
+                          : Icons.local_fire_department,
                       color: Colors.white,
                       size: 28,
                     ),
@@ -519,7 +587,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                 children: [
                   // Prominent Total Banner
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
                     decoration: BoxDecoration(
                       color: primary.withAlpha(isDark ? 30 : 15),
                       borderRadius: BorderRadius.circular(16),
@@ -545,7 +614,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                               "Includes 15% VAT",
                               style: TextStyle(
                                 fontSize: 11,
-                                color: theme.textTheme.bodyMedium?.color?.withAlpha(160),
+                                color: theme.textTheme.bodyMedium?.color
+                                    ?.withAlpha(160),
                               ),
                             ),
                           ],
@@ -567,15 +637,23 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                   Row(
                     children: [
                       Expanded(
-                        child: _buildMetricTile(theme, "Insured Sum", insuredSum > 0 ? "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}" : (details['Insured Sum']?.toString() ?? 'N/A')),
+                        child: _buildMetricTile(
+                            theme,
+                            "Insured Sum",
+                            insuredSum > 0
+                                ? "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}"
+                                : (details['Insured Sum']?.toString() ??
+                                    'N/A')),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _buildMetricTile(theme, "Net Premium", "BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}"),
+                        child: _buildMetricTile(theme, "Net Premium",
+                            "BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}"),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _buildMetricTile(theme, "VAT (15%)", "BDT ${NumberFormat("#,##0", "en_US").format(vat)}"),
+                        child: _buildMetricTile(theme, "VAT (15%)",
+                            "BDT ${NumberFormat("#,##0", "en_US").format(vat)}"),
                       ),
                     ],
                   ),
@@ -595,10 +673,12 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.black12 : Colors.grey.withAlpha(20),
+                        color:
+                            isDark ? Colors.black12 : Colors.grey.withAlpha(20),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       child: Column(
                         children: section.items.entries.map((e) {
                           return Padding(
@@ -610,7 +690,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                                   e.key,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: theme.textTheme.bodyMedium?.color?.withAlpha(200),
+                                    color: theme.textTheme.bodyMedium?.color
+                                        ?.withAlpha(200),
                                   ),
                                 ),
                                 Text(
@@ -635,9 +716,14 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.picture_as_pdf, size: 20),
-                      label: const Text("Export Official PDF Receipt"),
+                      label: const Text("Export PDF"),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 18),
+                        backgroundColor: primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       onPressed: () => ExportService.exportToPdf(
                         title: item.type,

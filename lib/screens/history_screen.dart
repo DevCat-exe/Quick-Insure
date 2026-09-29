@@ -6,7 +6,11 @@ import '../widgets/desktop_history_view.dart';
 
 class HistoryScreen extends StatefulWidget {
   final bool isEmbeddedInDesktop;
-  const HistoryScreen({super.key, this.isEmbeddedInDesktop = false});
+
+  const HistoryScreen({
+    super.key,
+    this.isEmbeddedInDesktop = false,
+  });
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -53,6 +57,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (item.type == 'Motor Insurance') {
       sections = [
         ResultSection("Vehicle Details", {
+          if (details['Registration Number'] != null)
+            "Registration Number": details['Registration Number'].toString(),
           "Engine CC": details['Engine CC']?.toString() ?? '',
           "Seating Capacity": details['Seating Capacity']?.toString() ?? '',
         }),
@@ -128,6 +134,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(0, 36),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              visualDensity: VisualDensity.compact,
+              textStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () async {
               await HistoryService.clearHistory();
@@ -148,8 +166,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = widget.isEmbeddedInDesktop || screenWidth >= 850;
+    final shortestSide = MediaQuery.sizeOf(context).shortestSide;
+    final isDesktop = widget.isEmbeddedInDesktop || shortestSide >= 600;
 
     if (isDesktop) {
       if (widget.isEmbeddedInDesktop) {
@@ -193,12 +211,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               return false;
             }
             if (query.isEmpty) return true;
-            return item.type.toLowerCase().contains(query) ||
-                item.date.toLowerCase().contains(query) ||
-                item.totalPremium.toString().contains(query) ||
-                item.details.values.any(
-                  (value) => value.toString().toLowerCase().contains(query),
-                );
+            return item.matchesSearch(query);
           }).toList();
 
           if (allHistory.isEmpty) {
@@ -298,7 +311,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   );
                 }
 
-                final item = history[index];
+                final item = history[index - 1];
                 final isMotor = item.type == 'Motor Insurance';
 
                 return Dismissible(
@@ -333,9 +346,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       onTap: () => _showHistoryItemPopup(item),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Container(
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final textScale =
+                                MediaQuery.textScalerOf(context).scale(1);
+                            final compact =
+                                constraints.maxWidth < 460 * textScale;
+                            final icon = Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: (isMotor ? Colors.blue : Colors.orange)
@@ -349,62 +366,123 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 color: isMotor ? Colors.blue : Colors.orange,
                                 size: 24,
                               ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.type,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    item.date,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[500],
-                                    ),
-                                  ),
-                                  if (item.details['Insured Sum'] != null) ...[
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      "Insured: ${item.details['Insured Sum']}",
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: isDark
-                                            ? Colors.white60
-                                            : Colors.black54,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                            );
+                            final details = Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "BDT ${NumberFormat("#,##0", "en_US").format(item.totalPremium)}",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w900,
+                                  item.type,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
                                     fontSize: 15,
-                                    color: theme.colorScheme.primary,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                const Icon(
-                                  Icons.chevron_right,
-                                  size: 18,
-                                  color: Colors.grey,
+                                const SizedBox(height: 3),
+                                Text(
+                                  item.date,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                                if (item.details['Insured Sum'] != null) ...[
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    "Insured: ${item.details['Insured Sum']}",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? Colors.white60
+                                          : Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                                if (item.details['Registration Number'] !=
+                                    null) ...[
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    "Reg: ${item.details['Registration Number']}",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? Colors.white60
+                                          : Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            );
+                            final amount = Text(
+                              "BDT ${NumberFormat("#,##0", "en_US").format(item.totalPremium)}",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                                color: theme.colorScheme.primary,
+                              ),
+                            );
+
+                            if (compact) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Row(
+                                    children: [
+                                      icon,
+                                      const SizedBox(width: 14),
+                                      Expanded(child: details),
+                                    ],
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 62,
+                                      top: 10,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Align(
+                                            alignment: Alignment.centerRight,
+                                            child: amount,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.chevron_right,
+                                          size: 18,
+                                          color: Colors.grey,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
+
+                            return Row(
+                              children: [
+                                icon,
+                                const SizedBox(width: 14),
+                                Expanded(child: details),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    amount,
+                                    const SizedBox(height: 4),
+                                    const Icon(
+                                      Icons.chevron_right,
+                                      size: 18,
+                                      color: Colors.grey,
+                                    ),
+                                  ],
                                 ),
                               ],
-                            ),
-                          ],
+                            );
+                          },
                         ),
                       ),
                     ),
