@@ -2,21 +2,27 @@
 
 ## [2.2.0] - 2026-09-29
 
-**Desktop & Mobile Overhaul**
+**Registration and Update Improvements**
 
 ### New Features
 
-- **Desktop workbench:** Dedicated calculator navigation, live premium summaries, and quick presets.
-- **Calculation actions:** Copy summaries and save calculations to history from the desktop view.
-- **Mobile navigation:** Direct access to Home, History, and Settings from the bottom bar.
-- **History tools:** Search and filter records; swipe to delete on mobile.
-- **Saved preferences:** Light and dark mode now persists between launches.
+- **Motor registration:** Optionally enter an English registration for DHAKA-METRO or CHATTA-METRO. The class code accepts two or three letters; series and vehicle numbers are formatted as the user types.
+- **Android updates:** Download the APK in-app with progress, then approve installation through Android.
+- **Windows updates:** Download a complete desktop bundle, replace the installed files, and relaunch Quick Insure.
+- **Release automation:** GitHub Actions publishes signed APK and Windows ZIP assets for version tags and provides a manual prerelease test path.
+
+### Improved
+
+- **History search:** Registration numbers, saved details, date formats, and plain or formatted premiums are searchable on mobile and desktop.
+- **Registration details:** The number is shown separately in calculation results and saved history.
+- **Mobile navigation:** Kept Home and History as the main destinations, removed the separate Settings tab, and placed dark mode on Home.
+- **Phone layout:** Calculator scrolling accounts for the system navigation area and landscape phones retain the phone layout.
+- **Desktop notices:** Update and save messages use a readable maximum width.
+- **Release presentation:** About dialogs avoid repeating the version heading; the Windows app icon and executable metadata use Quick Insure branding.
 
 ### Fixed
 
-- **Platform-aware updates:** Desktop and web users are sent to the GitHub release; Android downloads the APK when available.
-- **History deletion:** Deletion now targets the selected record, including while a filter is active.
-- **Desktop startup:** Desktop apps open at a defined size with a minimum window size.
+- **History list:** Corrected the item index after the search/filter row to prevent out-of-range access.
 
 ### Availability
 
