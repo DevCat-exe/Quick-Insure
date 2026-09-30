@@ -845,9 +845,6 @@ try {
       if (versionSection != null && versionSection.isNotEmpty) {
         return versionSection;
       }
-      if (localMarkdown.isNotEmpty) {
-        return localMarkdown;
-      }
     } catch (e) {
       debugPrint("Local asset changelog error: $e");
     }
