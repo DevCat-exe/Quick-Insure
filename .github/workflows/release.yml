@@ -236,23 +236,28 @@ jobs:
           Compress-Archive -Path 'build/windows/x64/runner/Release/*' -DestinationPath "$releaseDirectory/quick_insure_windows.zip" -CompressionLevel Optimal
 
       - name: Remove legacy versioned duplicate assets
+        # Tidy-up only: it must never block a release.
+        continue-on-error: true
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
           $releaseJson = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$env:RELEASE_TAG" 2>$null
-          if ($LASTEXITCODE -eq 0 -and $releaseJson) {
-            $release = $releaseJson | ConvertFrom-Json
-            foreach ($asset in $release.assets) {
-              if ($asset.name -match '^quick_insure_(?:windows_)?v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?\.(?:apk|zip|exe)$') {
-                gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/releases/assets/$($asset.id)"
-                if ($LASTEXITCODE -ne 0) {
-                  throw "Could not remove legacy duplicate asset $($asset.name)."
-                }
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($releaseJson)) {
+            Write-Host "No published release for $env:RELEASE_TAG yet, so there is nothing to clean up."
+            exit 0
+          }
+          $release = $releaseJson | ConvertFrom-Json
+          foreach ($asset in $release.assets) {
+            if ($asset.name -match '^quick_insure_(?:windows_)?v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?\.(?:apk|zip|exe)$') {
+              gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/releases/assets/$($asset.id)"
+              if ($LASTEXITCODE -ne 0) {
+                throw "Could not remove legacy duplicate asset $($asset.name)."
               }
             }
           }
+          exit 0
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
