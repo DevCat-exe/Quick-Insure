@@ -214,7 +214,7 @@ jobs:
           if ($LASTEXITCODE -eq 0 -and $releaseJson) {
             $release = $releaseJson | ConvertFrom-Json
             foreach ($asset in $release.assets) {
-              if ($asset.name -match '^quick_insure(_windows)?_.+\.(apk|zip)$') {
+              if ($asset.name -match '^quick_insure_(?:windows_)?v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?\.(?:apk|zip)$') {
                 gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/releases/assets/$($asset.id)"
                 if ($LASTEXITCODE -ne 0) {
                   throw "Could not remove legacy duplicate asset $($asset.name)."
