@@ -8,8 +8,9 @@
 
 - **Motor registration:** Optionally enter an English registration for DHAKA-METRO or CHATTA-METRO. The class code accepts two or three letters; series and vehicle numbers are formatted as the user types.
 - **Android updates:** Download the APK in-app with progress, then approve installation through Android.
-- **Windows updates:** Download a complete desktop bundle, replace the installed files, and relaunch Quick Insure.
-- **Release automation:** GitHub Actions publishes signed APK and Windows ZIP assets for version tags and provides a manual prerelease test path.
+- **Windows installer:** `quick_insure_windows_setup.exe` installs Quick Insure with Start Menu and optional desktop shortcuts, and it can be removed from Windows Settings.
+- **Windows updates:** Update from inside the app. Writable folders are replaced in place, while installs under Program Files use the installer and a Windows permission prompt before Quick Insure reopens.
+- **Release automation:** GitHub Actions publishes the signed APK, the Windows installer, and the Windows ZIP assets for version tags and provides a manual prerelease test path.
 
 ### Improved
 

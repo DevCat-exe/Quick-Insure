@@ -196,6 +196,37 @@ jobs:
           RELEASE_BUILD_NUMBER: ${{ steps.release.outputs.build_number }}
         run: flutter build windows --release "--build-name=$env:RELEASE_VERSION" "--build-number=$env:RELEASE_BUILD_NUMBER"
 
+      - name: Build Windows Installer
+        shell: pwsh
+        env:
+          QUICK_INSURE_APP_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:QUICK_INSURE_APP_VERSION)) {
+            throw 'The release version is empty, so the installer cannot be labelled.'
+          }
+          $candidates = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+            "${env:ProgramFiles(x86)}\Inno Setup 7\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 7\ISCC.exe"
+          )
+          $iscc = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          if (-not $iscc) {
+            $iscc = Get-ChildItem 'C:\Program Files*\Inno Setup*\ISCC.exe' -ErrorAction SilentlyContinue |
+              Select-Object -First 1 -ExpandProperty FullName
+          }
+          if (-not $iscc) {
+            $iscc = (Get-Command ISCC.exe -ErrorAction SilentlyContinue).Source
+          }
+          if (-not $iscc) {
+            throw 'Inno Setup compiler (ISCC.exe) was not found on this runner.'
+          }
+          Write-Host "Compiling the Windows installer with $iscc"
+          & $iscc 'windows\installer.iss'
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup failed with exit code $LASTEXITCODE."
+          }
+
       - name: Package release assets
         shell: pwsh
         run: |
@@ -214,7 +245,7 @@ jobs:
           if ($LASTEXITCODE -eq 0 -and $releaseJson) {
             $release = $releaseJson | ConvertFrom-Json
             foreach ($asset in $release.assets) {
-              if ($asset.name -match '^quick_insure_(?:windows_)?v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?\.(?:apk|zip)$') {
+              if ($asset.name -match '^quick_insure_(?:windows_)?v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?\.(?:apk|zip|exe)$') {
                 gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/releases/assets/$($asset.id)"
                 if ($LASTEXITCODE -ne 0) {
                   throw "Could not remove legacy duplicate asset $($asset.name)."
@@ -235,3 +266,4 @@ jobs:
           files: |
             build/release-assets/quick_insure.apk
             build/release-assets/quick_insure_windows.zip
+            build/release-assets/quick_insure_windows_setup.exe

@@ -12,6 +12,9 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../widgets/app_snackbar.dart';
 
+/// The kind of Windows download that a release offers.
+enum _WindowsUpdateKind { none, bundle, installer }
+
 class UpdateChecker {
   static const String _testReleaseTag =
       String.fromEnvironment('QUICK_INSURE_TEST_RELEASE_TAG');
@@ -98,13 +101,33 @@ class UpdateChecker {
                     'quick_insure_windows.zip',
             orElse: () => null,
           );
+          final windowsSetup = releaseAssets.firstWhere(
+            (asset) =>
+                asset?['name'] is String &&
+                (asset!['name'] as String).toLowerCase() ==
+                    'quick_insure_windows_setup.exe',
+            orElse: () => null,
+          );
           final isAndroidApk = isAndroid && apkAsset != null;
-          final isWindowsBundle = isWindows && windowsBundle != null;
+          // The installer can elevate, so it is used when Quick Insure cannot
+          // replace its own files. Writable installs keep the lighter bundle.
+          final isWindowsSetup = isWindows &&
+              windowsSetup != null &&
+              (windowsBundle == null || !await _canWriteToInstallDirectory());
+          final isWindowsBundle =
+              isWindows && !isWindowsSetup && windowsBundle != null;
+          final windowsUpdateKind = isWindowsSetup
+              ? _WindowsUpdateKind.installer
+              : isWindowsBundle
+                  ? _WindowsUpdateKind.bundle
+                  : _WindowsUpdateKind.none;
           final selectedAsset = isAndroidApk
               ? apkAsset
-              : isWindowsBundle
-                  ? windowsBundle
-                  : null;
+              : isWindowsSetup
+                  ? windowsSetup
+                  : isWindowsBundle
+                      ? windowsBundle
+                      : null;
           final downloadUrl = selectedAsset == null
               ? latestReleaseUrl
               : selectedAsset['browser_download_url'] as String;
@@ -116,11 +139,11 @@ class UpdateChecker {
               latestVersion,
               isAndroidApk
                   ? 'Download APK'
-                  : isWindowsBundle
+                  : windowsUpdateKind != _WindowsUpdateKind.none
                       ? 'Install Update'
                       : 'View Release',
               isAndroidApk: isAndroidApk,
-              isWindowsBundle: isWindowsBundle,
+              windowsUpdateKind: windowsUpdateKind,
               scaffoldMessengerKey: scaffoldMessengerKey,
             );
           }
@@ -174,7 +197,7 @@ class UpdateChecker {
     String newVersion,
     String actionLabel, {
     required bool isAndroidApk,
-    required bool isWindowsBundle,
+    required _WindowsUpdateKind windowsUpdateKind,
     required GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey,
   }) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -257,7 +280,14 @@ class UpdateChecker {
                   newVersion,
                   scaffoldMessengerKey,
                 );
-              } else if (isWindowsBundle) {
+              } else if (windowsUpdateKind == _WindowsUpdateKind.installer) {
+                await _downloadAndInstallWindowsInstaller(
+                  context,
+                  releaseUrl,
+                  newVersion,
+                  scaffoldMessengerKey,
+                );
+              } else if (windowsUpdateKind == _WindowsUpdateKind.bundle) {
                 await _downloadAndInstallWindowsBundle(
                   context,
                   releaseUrl,
@@ -401,6 +431,22 @@ class UpdateChecker {
     }
   }
 
+  /// Whether Quick Insure can replace the files it was started from.
+  Future<bool> _canWriteToInstallDirectory() async {
+    try {
+      final directory = File(Platform.resolvedExecutable).parent;
+      final probe = File(
+        '${directory.path}/.quick-insure-update-${pid.toString()}',
+      );
+      await probe.writeAsString('');
+      await probe.delete();
+      return true;
+    } catch (error) {
+      debugPrint('Install directory is not writable: $error');
+      return false;
+    }
+  }
+
   Future<void> _downloadAndInstallWindowsBundle(
     BuildContext context,
     String downloadUrl,
@@ -416,11 +462,11 @@ class UpdateChecker {
     File? partialArchive;
 
     try {
-      final writeProbe = File(
-        '${installDirectory.path}/.quick-insure-update-${pid.toString()}',
-      );
-      await writeProbe.writeAsString('');
-      await writeProbe.delete();
+      if (!await _canWriteToInstallDirectory()) {
+        throw Exception(
+          'Quick Insure cannot write to ${installDirectory.path}.',
+        );
+      }
 
       showDialog<void>(
         context: context,
@@ -566,6 +612,188 @@ try {
             context,
             content: const Text(
               'Could not update here. Move Quick Insure to a writable folder and try again.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      client.close();
+      progress.dispose();
+    }
+  }
+
+  Future<void> _downloadAndInstallWindowsInstaller(
+    BuildContext context,
+    String downloadUrl,
+    String version,
+    GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey,
+  ) async {
+    final executable = File(Platform.resolvedExecutable);
+    final installDirectory = executable.parent;
+    final progress = ValueNotifier<double?>(null);
+    final client = http.Client();
+    final dialogNavigator = Navigator.of(context, rootNavigator: true);
+    var progressDialogOpen = false;
+    File? partialInstaller;
+
+    try {
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            title: const Text('Downloading desktop update'),
+            content: SizedBox(
+              width: 320,
+              child: ValueListenableBuilder<double?>(
+                valueListenable: progress,
+                builder: (context, value, _) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LinearProgressIndicator(value: value),
+                    const SizedBox(height: 12),
+                    Text(
+                      value == null
+                          ? 'Downloading Quick Insure v$version...'
+                          : 'Downloaded ${(value * 100).round()}%',
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Windows asks for permission before installing, then '
+                      'Quick Insure reopens.',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      progressDialogOpen = true;
+
+      final response = await client.send(
+        http.Request('GET', Uri.parse(downloadUrl)),
+      );
+      if (response.statusCode != HttpStatus.ok) {
+        throw HttpException(
+            'Windows installer download failed (${response.statusCode}).');
+      }
+
+      final tempDirectory = await getTemporaryDirectory();
+      partialInstaller = File(
+        '${tempDirectory.path}/quick_insure_windows_setup.exe.part',
+      );
+      final installer = File(
+        '${tempDirectory.path}/quick_insure_windows_setup.exe',
+      );
+      if (await partialInstaller.exists()) await partialInstaller.delete();
+
+      final sink = partialInstaller.openWrite();
+      try {
+        var receivedBytes = 0;
+        await for (final chunk in response.stream) {
+          sink.add(chunk);
+          receivedBytes += chunk.length;
+          if (response.contentLength case final totalBytes?
+              when totalBytes > 0) {
+            progress.value = receivedBytes / totalBytes;
+          }
+        }
+      } finally {
+        await sink.close();
+      }
+      if (await installer.exists()) await installer.delete();
+      await partialInstaller.rename(installer.path);
+      partialInstaller = null;
+
+      final script = File('${tempDirectory.path}/quick_insure_update.ps1');
+      await script.writeAsString(r'''
+param(
+  [int]$ProcessId,
+  [string]$InstallerPath,
+  [string]$InstallDirectory,
+  [string]$ExecutablePath
+)
+$ErrorActionPreference = 'Stop'
+$InstallerName = [System.IO.Path]::GetFileNameWithoutExtension($InstallerPath)
+$ExitCode = 1
+try {
+  Wait-Process -Id $ProcessId -ErrorAction SilentlyContinue
+  try {
+    $SetupProcess = Start-Process -FilePath $InstallerPath -ArgumentList "/SILENT /NORESTART /DIR=`"$InstallDirectory`"" -PassThru
+    if ($null -ne $SetupProcess) { $SetupProcess.WaitForExit() }
+    $Deadline = (Get-Date).AddMinutes(10)
+    while ((Get-Process -Name $InstallerName -ErrorAction SilentlyContinue) -and ((Get-Date) -lt $Deadline)) {
+      Start-Sleep -Seconds 1
+    }
+    if ($null -ne $SetupProcess -and $SetupProcess.HasExited) { $ExitCode = $SetupProcess.ExitCode } else { $ExitCode = 0 }
+  } catch {
+    $ExitCode = 1
+  }
+  Start-Sleep -Seconds 3
+  if (-not (Get-Process -Name 'quick_insure' -ErrorAction SilentlyContinue)) {
+    if (Test-Path -LiteralPath $ExecutablePath) {
+      Start-Process -FilePath $ExecutablePath -WorkingDirectory $InstallDirectory
+    }
+  }
+  if ($ExitCode -ne 0) {
+    $Message = 'Quick Insure could not finish updating. Run the installer again from the release page.'
+    try {
+      Add-Type -AssemblyName PresentationFramework
+      [System.Windows.MessageBox]::Show($Message, 'Quick Insure update failed', 'OK', 'Error') | Out-Null
+    } catch {}
+  }
+} catch {
+  $Message = "Quick Insure could not finish updating: $($_.Exception.Message)"
+  try {
+    Add-Type -AssemblyName PresentationFramework
+    [System.Windows.MessageBox]::Show($Message, 'Quick Insure update failed', 'OK', 'Error') | Out-Null
+  } catch {}
+} finally {
+  Remove-Item -LiteralPath $InstallerPath -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue
+}
+''');
+
+      final installDialogNavigator = dialogNavigator;
+      if (!installDialogNavigator.mounted) return;
+      installDialogNavigator.pop();
+      progressDialogOpen = false;
+
+      await Process.start(
+        'powershell.exe',
+        [
+          '-NoProfile',
+          '-ExecutionPolicy',
+          'Bypass',
+          '-WindowStyle',
+          'Hidden',
+          '-File',
+          script.path,
+          pid.toString(),
+          installer.path,
+          installDirectory.path,
+          executable.path,
+        ],
+        mode: ProcessStartMode.detached,
+      );
+      await windowManager.close();
+    } catch (error) {
+      debugPrint('Windows installer update failed: $error');
+      if (partialInstaller != null && await partialInstaller.exists()) {
+        await partialInstaller.delete();
+      }
+      if (progressDialogOpen && dialogNavigator.mounted) {
+        dialogNavigator.pop();
+      }
+      if (context.mounted) {
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          appSnackBar(
+            context,
+            content: const Text(
+              'Could not download the update. Check your connection and try again.',
             ),
           ),
         );

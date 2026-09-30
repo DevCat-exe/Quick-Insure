@@ -20,8 +20,16 @@ The app currently supports **Motor Insurance** and **Fire Insurance**
 
 ## 🚀 Download
 
-**Latest Release (v2.1.2)**  
-[Download APK](https://github.com/DevCat-exe/Quick-Insure/releases/download/v2.1.2/quickinsure_2.1.2.apk)
+Every release is published on the [releases page](https://github.com/DevCat-exe/Quick-Insure/releases/latest).
+
+| Platform            | Download                                                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Android             | [quick_insure.apk](https://github.com/DevCat-exe/Quick-Insure/releases/latest/download/quick_insure.apk)                    |
+| Windows (installer) | [quick_insure_windows_setup.exe](https://github.com/DevCat-exe/Quick-Insure/releases/latest/download/quick_insure_windows_setup.exe) |
+| Windows (portable)  | [quick_insure_windows.zip](https://github.com/DevCat-exe/Quick-Insure/releases/latest/download/quick_insure_windows.zip)     |
+
+The Windows installer adds Start Menu and optional desktop shortcuts and can be removed from Windows Settings.
+The portable ZIP only needs to be unpacked, then `quick_insure.exe` can be run from that folder.
 
 ---
 
@@ -53,7 +61,7 @@ The app currently supports **Motor Insurance** and **Fire Insurance**
 | Language  | Dart                                       |
 | UI        | Material Design, Custom Animations         |
 | State     | Local state management                     |
-| Platform  | Android (APK), extensible to iOS & Desktop |
+| Platform  | Android (APK), Windows (installer and portable ZIP) |
 
 ## 📦 Getting Started
 
