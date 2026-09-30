@@ -1,0 +1,2 @@
+# Lint rules for Quick Insure.
+include: package:flutter_lints/flutter.yaml

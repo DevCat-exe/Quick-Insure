@@ -2,36 +2,23 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AppStyles {
-  // Premium Color Palette
-  static const Color primaryColor = Color(0xFFE53E3E); // Vibrant Red
+  static const Color primaryColor = Color(0xFFE53E3E);
   static const Color primaryDark = Color(0xFFC53030);
   static const Color accentColor = Color(0xFF2D3748);
   static const Color scaffoldBackgroundColor = Color(0xFFF7FAFC);
   static const Color cardColor = Color(0xFFFFFFFF);
   static const Color borderColor = Color(0xFFE2E8F0);
 
-  // Gradient definitions
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [Color(0xFFF56565), Color(0xFFE53E3E)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  static LinearGradient getGlassGradient(bool isDark) {
-    return LinearGradient(
-      colors: isDark
-          ? [Colors.white.withAlpha(20), Colors.white.withAlpha(10)]
-          : [Colors.white.withAlpha(200), Colors.white.withAlpha(150)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-  }
-
-  static ThemeData getTheme({bool dark = false}) {
-    final isDark = dark;
-    final Color darkPrimary = Color(0xFF111827); // Deeper dark
-    final Color darkCard = Color(0xFF374151); // Slate dark
-    final Color darkBorder = Color(0xFF4A5568);
+  static ThemeData getTheme({bool isDark = false}) {
+    const darkPrimary = Color(0xFF111827);
+    const darkCard = Color(0xFF374151);
+    const darkBorder = Color(0xFF4A5568);
 
     final brightness = isDark ? Brightness.dark : Brightness.light;
     final colorScheme = ColorScheme.fromSeed(

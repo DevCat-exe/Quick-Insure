@@ -149,13 +149,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
             onPressed: () async {
               await HistoryService.clearHistory();
-              if (mounted) {
-                Navigator.pop(context);
-                _refreshHistory();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("History cleared.")),
-                );
-              }
+              if (!context.mounted) return;
+              final messenger = ScaffoldMessenger.of(context);
+              Navigator.pop(context);
+              _refreshHistory();
+              messenger.showSnackBar(
+                const SnackBar(content: Text("History cleared.")),
+              );
             },
             child: const Text("Clear"),
           ),

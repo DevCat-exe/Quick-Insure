@@ -155,19 +155,21 @@ class UpdateChecker {
     } catch (e) {
       messenger.hideCurrentSnackBar();
 
-      messenger.showSnackBar(
-        appSnackBar(
-          context,
-          content: Text(
-            "Network error. Please check your connection.",
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: Colors.white, fontSize: 13),
-            overflow: TextOverflow.ellipsis,
+      if (context.mounted) {
+        messenger.showSnackBar(
+          appSnackBar(
+            context,
+            content: Text(
+              "Network error. Please check your connection.",
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: Colors.white, fontSize: 13),
+              overflow: TextOverflow.ellipsis,
+            ),
+            backgroundColor: theme.colorScheme.primary,
+            duration: const Duration(seconds: 3),
           ),
-          backgroundColor: theme.colorScheme.primary,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+        );
+      }
       debugPrint("Update check failed: $e");
     }
     return false;
@@ -468,6 +470,7 @@ class UpdateChecker {
         );
       }
 
+      if (!context.mounted) return;
       showDialog<void>(
         context: context,
         barrierDismissible: false,

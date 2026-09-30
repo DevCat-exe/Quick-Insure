@@ -165,7 +165,6 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header Banner
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               decoration: BoxDecoration(
@@ -211,14 +210,11 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Content body
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Prominent Grand Total Block
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 16),
@@ -266,8 +262,6 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  // Core figures row
                   Row(
                     children: [
                       Expanded(
@@ -299,8 +293,6 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-
-                  // Breakdown Sections
                   for (final section in sections) ...[
                     Text(
                       section.title.toUpperCase(),
@@ -380,9 +372,7 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                   ],
-
                   const SizedBox(height: 8),
-                  // Action Buttons
                   Row(
                     children: [
                       Expanded(

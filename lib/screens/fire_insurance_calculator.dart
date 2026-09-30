@@ -260,7 +260,6 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Form Column
                   Expanded(
                     flex: 6,
                     child: Container(
@@ -278,7 +277,6 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
                     ),
                   ),
                   const SizedBox(width: 28),
-                  // Summary Column
                   Expanded(
                     flex: 5,
                     child: DesktopCalculationSummaryCard(

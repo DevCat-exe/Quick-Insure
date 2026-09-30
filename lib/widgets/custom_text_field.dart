@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../constants/styles.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -41,11 +42,11 @@ class CustomTextField extends StatelessWidget {
         hintText: hintText,
         prefixText: prefixText,
         prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: Color(0xFFC53030))
+            ? Icon(prefixIcon, color: AppStyles.primaryDark)
             : null,
         suffixIcon: controller.text.isNotEmpty
             ? IconButton(
-                icon: Icon(Icons.clear, color: Color(0xFFC53030)),
+                icon: const Icon(Icons.clear, color: AppStyles.primaryDark),
                 onPressed: () {
                   controller.clear();
                   if (onChanged != null) onChanged!("");
@@ -54,11 +55,11 @@ class CustomTextField extends StatelessWidget {
             : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Color(0xFFC53030)),
+          borderSide: const BorderSide(color: AppStyles.primaryDark),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Color(0xFFC53030), width: 2),
+          borderSide: const BorderSide(color: AppStyles.primaryDark, width: 2),
         ),
       ),
     );

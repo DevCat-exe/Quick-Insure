@@ -167,7 +167,6 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
     return Scaffold(
       body: Row(
         children: [
-          // Dedicated Desktop Sidebar (~270px)
           Container(
             width: 270,
             decoration: BoxDecoration(
@@ -180,7 +179,6 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
             ),
             child: Column(
               children: [
-                // Brand Header
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
                   child: Row(
@@ -245,8 +243,6 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
                   ),
                 ),
                 const Divider(height: 1),
-
-                // Navigation Items
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.symmetric(
@@ -293,17 +289,13 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
                     ],
                   ),
                 ),
-
                 const Divider(height: 1),
               ],
             ),
           ),
-
-          // Main Active Workbench Area
           Expanded(
             child: Column(
               children: [
-                // Top Command & Header Bar
                 Container(
                   height: 64,
                   padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -343,8 +335,6 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
                     ],
                   ),
                 ),
-
-                // Body Workspace
                 Expanded(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 360),

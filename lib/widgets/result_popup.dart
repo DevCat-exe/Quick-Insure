@@ -65,7 +65,6 @@ class ResultPopup extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Header with Gradient
                 Container(
                   padding: EdgeInsets.symmetric(
                     vertical: isSmallScreen ? 20 : 28,

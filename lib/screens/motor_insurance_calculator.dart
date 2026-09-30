@@ -42,7 +42,6 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
   String _registrationZone = 'DHAKA-METRO';
   bool _isFormValid = false;
 
-  // Live calculation results
   Map<String, dynamic>? _currentResult;
   double _currentInsuredSum = 0;
 
@@ -357,7 +356,6 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Form Column
                   Expanded(
                     flex: 6,
                     child: Container(
@@ -375,7 +373,6 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
                     ),
                   ),
                   const SizedBox(width: 28),
-                  // Summary & Receipt Column
                   Expanded(
                     flex: 5,
                     child: DesktopCalculationSummaryCard(

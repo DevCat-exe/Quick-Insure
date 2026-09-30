@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/styles.dart';
 
 class CustomDropdown extends StatelessWidget {
   final String value;
@@ -37,14 +38,14 @@ class CustomDropdown extends StatelessWidget {
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: labelText,
-        prefixIcon: Icon(icon, color: Color(0xFFC53030)),
+        prefixIcon: Icon(icon, color: AppStyles.primaryDark),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Color(0xFFC53030)),
+          borderSide: const BorderSide(color: AppStyles.primaryDark),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Color(0xFFC53030), width: 2),
+          borderSide: const BorderSide(color: AppStyles.primaryDark, width: 2),
         ),
       ),
     );

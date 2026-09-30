@@ -178,7 +178,6 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Left Master List Column
             SizedBox(
               width: 400,
               child: Container(
@@ -193,7 +192,6 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                 ),
                 child: Column(
                   children: [
-                    // Search & Filter Header
                     Padding(
                       padding: const EdgeInsets.all(20),
                       child: Column(
@@ -222,7 +220,6 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          // Search field
                           TextField(
                             controller: _searchController,
                             onChanged: (val) =>
@@ -244,7 +241,6 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          // Filter chips
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
@@ -261,8 +257,6 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                       ),
                     ),
                     const Divider(height: 1),
-
-                    // Items List
                     Expanded(
                       child: filteredItems.isEmpty
                           ? Center(
@@ -436,8 +430,6 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                 ),
               ),
             ),
-
-            // Right Detail Inspector Column
             Expanded(
               child: _selectedItem == null
                   ? Center(
@@ -522,7 +514,6 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Bar
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -579,13 +570,11 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                 ],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Prominent Total Banner
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 16),
@@ -632,8 +621,6 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // Metrics summary
                   Row(
                     children: [
                       Expanded(
@@ -658,8 +645,6 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                     ],
                   ),
                   const SizedBox(height: 24),
-
-                  // Sections
                   for (final section in sections) ...[
                     Text(
                       section.title.toUpperCase(),
@@ -709,9 +694,7 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                     ),
                     const SizedBox(height: 16),
                   ],
-
                   const SizedBox(height: 12),
-                  // Export Action Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(

@@ -27,17 +27,17 @@ void main() async {
     });
   }
 
-  runApp(const MotorInsuranceApp());
+  runApp(const QuickInsureApp());
 }
 
-class MotorInsuranceApp extends StatefulWidget {
-  const MotorInsuranceApp({super.key});
+class QuickInsureApp extends StatefulWidget {
+  const QuickInsureApp({super.key});
 
   @override
-  State<MotorInsuranceApp> createState() => _MotorInsuranceAppState();
+  State<QuickInsureApp> createState() => _QuickInsureAppState();
 }
 
-class _MotorInsuranceAppState extends State<MotorInsuranceApp> {
+class _QuickInsureAppState extends State<QuickInsureApp> {
   bool _darkMode = false;
 
   @override
@@ -71,7 +71,7 @@ class _MotorInsuranceAppState extends State<MotorInsuranceApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Quick Insure',
-      theme: AppStyles.getTheme(dark: _darkMode),
+      theme: AppStyles.getTheme(isDark: _darkMode),
       scaffoldMessengerKey: scaffoldMessengerKey,
       home: HomeScreen(
         onToggleDarkMode: _toggleDarkMode,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/styles.dart';
 
 class CalculatorCard extends StatefulWidget {
   final String title;
@@ -27,9 +28,13 @@ class _CalculatorCardState extends State<CalculatorCard> {
     final Color iconCircleColor =
         isDark ? Colors.white.withAlpha(25) : Colors.white.withAlpha(40);
 
-    final List<Color> cardGradient = isDark
-        ? [const Color(0xFFE53E3E), const Color(0xFFC53030)]
-        : [const Color(0xFFF56565), const Color(0xFFE53E3E)];
+    final LinearGradient cardGradient = isDark
+        ? const LinearGradient(
+            colors: [AppStyles.primaryColor, AppStyles.primaryDark],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          )
+        : AppStyles.primaryGradient;
 
     return GestureDetector(
       onTapDown: (_) {
@@ -46,17 +51,13 @@ class _CalculatorCardState extends State<CalculatorCard> {
           ..scaleByDouble(
               _isTapped ? 0.94 : 1.0, _isTapped ? 0.94 : 1.0, 1.0, 1.0),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: cardGradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          gradient: cardGradient,
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
               color: isDark
                   ? Colors.black.withAlpha(_isTapped ? 120 : 60)
-                  : const Color(0xFFE53E3E).withAlpha(_isTapped ? 100 : 50),
+                  : AppStyles.primaryColor.withAlpha(_isTapped ? 100 : 50),
               blurRadius: _isTapped ? 20 : 12,
               offset: const Offset(0, 8),
             ),
