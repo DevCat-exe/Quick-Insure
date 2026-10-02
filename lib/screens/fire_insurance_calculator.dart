@@ -34,7 +34,7 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
     'Fire',
     'Earthquake',
     'Cyclone',
-    'Flood'
+    'Flood',
   ];
 
   Map<String, dynamic>? _currentResult;
@@ -87,20 +87,19 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
     }
   }
 
-  List<ResultSection> _buildSections(List<String> selectedRisks,
-      Map<String, double> riskPremiums, dynamic totalRate) {
+  List<ResultSection> _buildSections(
+    List<String> selectedRisks,
+    Map<String, double> riskPremiums,
+    dynamic totalRate,
+  ) {
     return [
-      ResultSection("Property Details", {
-        "Zone": _selectedZone ?? 'N/A',
-      }),
+      ResultSection("Property Details", {"Zone": _selectedZone ?? 'N/A'}),
       ResultSection("Selected Risks", {
         for (var risk in selectedRisks)
           risk:
               "${_getRateForRisk(risk)}% (BDT ${NumberFormat("#,##0", "en_US").format(riskPremiums[risk] ?? 0)})",
       }),
-      ResultSection("Summary", {
-        "Total Rate": "$totalRate%",
-      }),
+      ResultSection("Summary", {"Total Rate": "$totalRate%"}),
     ];
   }
 
@@ -111,8 +110,10 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
     Map<String, dynamic> result,
   ) {
     final riskBreakdown = selectedRisks
-        .map((r) =>
-            "$r (${_getRateForRisk(r)}%) - BDT ${NumberFormat("#,##0", "en_US").format(riskPremiums[r] ?? 0)}")
+        .map(
+          (r) =>
+              "$r (${_getRateForRisk(r)}%) - BDT ${NumberFormat("#,##0", "en_US").format(riskPremiums[r] ?? 0)}",
+        )
         .join(', ');
 
     return {
@@ -133,7 +134,8 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
       final messenger = scaffoldMessengerKey.currentState;
       messenger?.showSnackBar(
         const SnackBar(
-            content: Text("Invalid input. Please check your values.")),
+          content: Text("Invalid input. Please check your values."),
+        ),
       );
       return;
     }
@@ -146,7 +148,11 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
           (_currentResult!['riskPremiums'] as Map<String, double>?) ?? {};
 
       final details = _buildExportDetails(
-          insuredSum, selectedRisks, riskPremiums, _currentResult!);
+        insuredSum,
+        selectedRisks,
+        riskPremiums,
+        _currentResult!,
+      );
 
       final historyItem = CalculationHistoryItem(
         date: DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now()),
@@ -166,7 +172,10 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
           totalPremium: _currentResult!['totalPremium'],
           insuredSum: insuredSum,
           sections: _buildSections(
-              selectedRisks, riskPremiums, _currentResult!['totalRate']),
+            selectedRisks,
+            riskPremiums,
+            _currentResult!['totalRate'],
+          ),
           exportDetails: details,
         ),
       );
@@ -202,7 +211,8 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
           ? _buildDesktopLayout(theme, formContent)
           : SingleChildScrollView(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom +
+                bottom:
+                    MediaQuery.of(context).viewInsets.bottom +
                     MediaQuery.of(context).padding.bottom +
                     24,
                 left: 24.0,
@@ -226,9 +236,13 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
                         ),
                       ),
                       onPressed: _isFormValid ? _calculateAndShowModal : null,
-                      child: const Text("Calculate Premium",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600)),
+                      child: const Text(
+                        "Calculate Premium",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -246,7 +260,11 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
     final sections = _buildSections(selectedRisks, riskPremiums, totalRate);
     final exportDetails = _currentResult != null
         ? _buildExportDetails(
-            _currentInsuredSum, selectedRisks, riskPremiums, _currentResult!)
+            _currentInsuredSum,
+            selectedRisks,
+            riskPremiums,
+            _currentResult!,
+          )
         : <String, dynamic>{};
 
     return SingleChildScrollView(
@@ -336,9 +354,7 @@ class _FireInsuranceCalculatorState extends State<FireInsuranceCalculator> {
           hintText: "Select a zone",
         ),
         const SizedBox(height: 20),
-        if (_selectedZone != null) ...[
-          _buildCheckboxesList(theme),
-        ],
+        if (_selectedZone != null) ...[_buildCheckboxesList(theme)],
       ],
     );
   }

@@ -1,23 +1,13 @@
 class FireInsuranceModel {
   static const Map<String, Map<String, double>> ratesTable = {
-    'Dhaka': {
-      'Fire': 0.06,
-      'Earthquake': 0.16,
-      'Cyclone': 0.13,
-      'Flood': 0.17,
-    },
+    'Dhaka': {'Fire': 0.06, 'Earthquake': 0.16, 'Cyclone': 0.13, 'Flood': 0.17},
     'Chittagong': {
       'Fire': 0.08,
       'Earthquake': 0.16,
       'Cyclone': 0.25,
       'Flood': 0.08,
     },
-    'Sylhet': {
-      'Fire': 0.08,
-      'Earthquake': 0.3,
-      'Cyclone': 0.06,
-      'Flood': 0.13,
-    },
+    'Sylhet': {'Fire': 0.08, 'Earthquake': 0.3, 'Cyclone': 0.06, 'Flood': 0.13},
   };
 
   static Map<String, dynamic> calculatePremium({

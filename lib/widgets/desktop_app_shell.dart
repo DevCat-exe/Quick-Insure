@@ -3,6 +3,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../screens/motor_insurance_calculator.dart';
 import '../screens/fire_insurance_calculator.dart';
+import '../screens/overseas_mediclaim_calculator.dart';
 import '../screens/history_screen.dart';
 import '../services/update_checker.dart';
 import 'app_snackbar.dart';
@@ -43,6 +44,7 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
     } catch (_) {}
   }
 
+  // Kept so future calculators can reuse the coming soon dialog.
   void _showComingSoonDialog(String title) {
     showDialog(
       context: context,
@@ -56,8 +58,10 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
                 color: Theme.of(ctx).colorScheme.primary.withAlpha(20),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.auto_awesome,
-                  color: Theme.of(ctx).colorScheme.primary),
+              child: Icon(
+                Icons.auto_awesome,
+                color: Theme.of(ctx).colorScheme.primary,
+              ),
             ),
             const SizedBox(width: 12),
             Text(title),
@@ -95,17 +99,21 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("Version: v$_appVersion",
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  "Version: v$_appVersion",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 const Text(
-                    "Quick Insure is a modern desktop and mobile insurance premium calculation suite."),
+                  "Quick Insure is a modern desktop and mobile insurance premium calculation suite.",
+                ),
                 const SizedBox(height: 16),
                 Text(
                   "Changelog:",
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary),
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 FutureBuilder<String?>(
@@ -113,7 +121,8 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2));
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      );
                     }
                     if (snapshot.data != null &&
                         snapshot.data!.trim().isNotEmpty) {
@@ -127,7 +136,10 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
                     return Text(
                       "No changelog available for this version.",
                       style: TextStyle(
-                          color: Colors.grey[600], fontSize: 13, height: 1.5),
+                        color: Colors.grey[600],
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     );
                   },
                 ),
@@ -137,7 +149,9 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text("Close")),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Close"),
+          ),
         ],
       ),
     );
@@ -145,7 +159,9 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
 
   Future<void> _checkForUpdate() async {
     bool updated = await _updateChecker.checkForUpdate(
-        context, widget.scaffoldMessengerKey);
+      context,
+      widget.scaffoldMessengerKey,
+    );
     if (!updated && mounted) {
       final messenger = widget.scaffoldMessengerKey.currentState;
       messenger?.showSnackBar(
@@ -200,8 +216,11 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
                             ),
                           ],
                         ),
-                        child: const Icon(Icons.shield,
-                            color: Colors.white, size: 24),
+                        child: const Icon(
+                          Icons.shield,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -220,7 +239,9 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 1),
+                                    horizontal: 6,
+                                    vertical: 1,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: primary.withAlpha(30),
                                     borderRadius: BorderRadius.circular(6),
@@ -246,7 +267,9 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 16),
+                      horizontal: 14,
+                      vertical: 16,
+                    ),
                     children: [
                       _buildSidebarSectionLabel("CALCULATORS"),
                       _buildSidebarTile(
@@ -262,10 +285,7 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
                       _buildSidebarTile(
                         id: 'mediclaim',
                         title: 'Overseas Mediclaim',
-                        icon: Icons.health_and_safety_outlined,
-                        badge: 'Soon',
-                        badgeColor: Colors.grey.shade600,
-                        isUpcoming: true,
+                        icon: Icons.medical_services_outlined,
                       ),
                       const SizedBox(height: 20),
                       _buildSidebarSectionLabel("RECORDS & MANAGEMENT"),
@@ -327,9 +347,11 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
                       ),
                       IconButton(
                         tooltip: widget.darkMode ? 'Light mode' : 'Dark mode',
-                        icon: Icon(widget.darkMode
-                            ? Icons.light_mode_outlined
-                            : Icons.dark_mode_outlined),
+                        icon: Icon(
+                          widget.darkMode
+                              ? Icons.light_mode_outlined
+                              : Icons.dark_mode_outlined,
+                        ),
                         onPressed: widget.onToggleDarkMode,
                       ),
                     ],
@@ -470,6 +492,8 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
         return Icons.directions_car;
       case 'fire':
         return Icons.local_fire_department;
+      case 'mediclaim':
+        return Icons.medical_services;
       case 'history':
         return Icons.history;
       default:
@@ -483,6 +507,8 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
         return 'Motor Insurance Premium Calculator';
       case 'fire':
         return 'Fire & Property Insurance Premium Calculator';
+      case 'mediclaim':
+        return 'Overseas Mediclaim Premium Calculator';
       case 'history':
         return 'Calculation History & Export Center';
       default:
@@ -496,6 +522,8 @@ class _DesktopAppShellState extends State<DesktopAppShell> {
         return const MotorInsuranceCalculator(isEmbeddedInDesktop: true);
       case 'fire':
         return const FireInsuranceCalculator(isEmbeddedInDesktop: true);
+      case 'mediclaim':
+        return const OverseasMediclaimCalculator(isEmbeddedInDesktop: true);
       case 'history':
         return const HistoryScreen(isEmbeddedInDesktop: true);
       default:

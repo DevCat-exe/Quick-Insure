@@ -33,8 +33,9 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
     'DHAKA-METRO',
     'CHATTA-METRO',
   ];
-  static final RegExp _registrationSuffixPattern =
-      RegExp(r'^[A-Z]{2,3}-\d{2}-\d{4}$');
+  static final RegExp _registrationSuffixPattern = RegExp(
+    r'^[A-Z]{2,3}-\d{2}-\d{4}$',
+  );
 
   String _riskFactor = "";
   String _discount = "";
@@ -63,7 +64,8 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
   }
 
   void _checkFormValidity() {
-    final valid = _sumController.text.trim().isNotEmpty &&
+    final valid =
+        _sumController.text.trim().isNotEmpty &&
         _passengersController.text.trim().isNotEmpty &&
         _driversController.text.trim().isNotEmpty &&
         _engineCapacityController.text.trim().isNotEmpty &&
@@ -136,13 +138,14 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
   }
 
   List<ResultSection> _buildSections(
-      int engineCC,
-      int passengers,
-      int drivers,
-      double riskFactor,
-      double discount,
-      double ncb,
-      String registrationNumber) {
+    int engineCC,
+    int passengers,
+    int drivers,
+    double riskFactor,
+    double discount,
+    double ncb,
+    String registrationNumber,
+  ) {
     return [
       ResultSection("Vehicle Information", {
         "Engine Capacity": "$engineCC cc",
@@ -191,7 +194,8 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
       final messenger = scaffoldMessengerKey.currentState;
       messenger?.showSnackBar(
         const SnackBar(
-            content: Text("Invalid input. Please check your values.")),
+          content: Text("Invalid input. Please check your values."),
+        ),
       );
       return;
     }
@@ -279,7 +283,8 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
           ? _buildDesktopLayout(theme, formContent)
           : SingleChildScrollView(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom +
+                bottom:
+                    MediaQuery.of(context).viewInsets.bottom +
                     MediaQuery.of(context).padding.bottom +
                     24,
                 left: 24.0,
@@ -303,9 +308,13 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
                         ),
                       ),
                       onPressed: _isFormValid ? _calculateAndShowModal : null,
-                      child: const Text("Calculate Premium",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600)),
+                      child: const Text(
+                        "Calculate Premium",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -515,21 +524,14 @@ class _MotorInsuranceCalculatorState extends State<MotorInsuranceCalculator> {
     );
   }
 
-  Widget _buildResponsivePair({
-    required Widget first,
-    required Widget second,
-  }) {
+  Widget _buildResponsivePair({required Widget first, required Widget second}) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final textScale = MediaQuery.textScalerOf(context).scale(1);
         if (constraints.maxWidth < 520 * textScale) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              first,
-              const SizedBox(height: 16),
-              second,
-            ],
+            children: [first, const SizedBox(height: 16), second],
           );
         }
         return Row(

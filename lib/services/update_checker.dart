@@ -16,15 +16,18 @@ import '../widgets/app_snackbar.dart';
 enum _WindowsUpdateKind { none, bundle, installer }
 
 class UpdateChecker {
-  static const String _testReleaseTag =
-      String.fromEnvironment('QUICK_INSURE_TEST_RELEASE_TAG');
+  static const String _testReleaseTag = String.fromEnvironment(
+    'QUICK_INSURE_TEST_RELEASE_TAG',
+  );
 
   final String githubRepo = "DevCat-exe/Quick-Insure";
   String get latestReleaseUrl =>
       "https://github.com/$githubRepo/releases/latest";
 
-  Future<bool> checkForUpdate(BuildContext context,
-      GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey) async {
+  Future<bool> checkForUpdate(
+    BuildContext context,
+    GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey,
+  ) async {
     final theme = Theme.of(context);
     final messenger = scaffoldMessengerKey.currentState;
 
@@ -35,10 +38,7 @@ class UpdateChecker {
         context,
         content: Row(
           children: [
-            SizedBox(
-              width: 4,
-              height: 20,
-            ),
+            SizedBox(width: 4, height: 20),
             SizedBox(
               width: 16,
               height: 16,
@@ -51,8 +51,10 @@ class UpdateChecker {
             Expanded(
               child: Text(
                 'Checking for updates...',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: Colors.white, fontSize: 13),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                  fontSize: 13,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -75,7 +77,7 @@ class UpdateChecker {
         final data = jsonDecode(response.body);
         final latestVersion =
             (data["tag_name"] as String?)?.replaceFirst(RegExp(r'^v'), '') ??
-                "0.0.0";
+            "0.0.0";
         final List<dynamic> assets = data["assets"] as List<dynamic>;
         final changelog = data["body"] as String?;
 
@@ -111,7 +113,8 @@ class UpdateChecker {
           final isAndroidApk = isAndroid && apkAsset != null;
           // The installer can elevate, so it is used when Quick Insure cannot
           // replace its own files. Writable installs keep the lighter bundle.
-          final isWindowsSetup = isWindows &&
+          final isWindowsSetup =
+              isWindows &&
               windowsSetup != null &&
               (windowsBundle == null || !await _canWriteToInstallDirectory());
           final isWindowsBundle =
@@ -119,15 +122,15 @@ class UpdateChecker {
           final windowsUpdateKind = isWindowsSetup
               ? _WindowsUpdateKind.installer
               : isWindowsBundle
-                  ? _WindowsUpdateKind.bundle
-                  : _WindowsUpdateKind.none;
+              ? _WindowsUpdateKind.bundle
+              : _WindowsUpdateKind.none;
           final selectedAsset = isAndroidApk
               ? apkAsset
               : isWindowsSetup
-                  ? windowsSetup
-                  : isWindowsBundle
-                      ? windowsBundle
-                      : null;
+              ? windowsSetup
+              : isWindowsBundle
+              ? windowsBundle
+              : null;
           final downloadUrl = selectedAsset == null
               ? latestReleaseUrl
               : selectedAsset['browser_download_url'] as String;
@@ -140,8 +143,8 @@ class UpdateChecker {
               isAndroidApk
                   ? 'Download APK'
                   : windowsUpdateKind != _WindowsUpdateKind.none
-                      ? 'Install Update'
-                      : 'View Release',
+                  ? 'Install Update'
+                  : 'View Release',
               isAndroidApk: isAndroidApk,
               windowsUpdateKind: windowsUpdateKind,
               scaffoldMessengerKey: scaffoldMessengerKey,
@@ -161,8 +164,10 @@ class UpdateChecker {
             context,
             content: Text(
               "Network error. Please check your connection.",
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: Colors.white, fontSize: 13),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.white,
+                fontSize: 13,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
             backgroundColor: theme.colorScheme.primary,
@@ -179,10 +184,12 @@ class UpdateChecker {
     String numericVersion(String version) =>
         version.replaceFirst(RegExp(r'^v'), '').split(RegExp(r'[-+]')).first;
 
-    final latestParts =
-        numericVersion(latest).split('.').map(int.parse).toList();
-    final currentParts =
-        numericVersion(current).split('.').map(int.parse).toList();
+    final latestParts = numericVersion(
+      latest,
+    ).split('.').map(int.parse).toList();
+    final currentParts = numericVersion(
+      current,
+    ).split('.').map(int.parse).toList();
 
     for (int i = 0; i < latestParts.length; i++) {
       if (latestParts[i] > (i < currentParts.length ? currentParts[i] : 0)) {
@@ -224,31 +231,35 @@ class UpdateChecker {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("New Version: v$newVersion",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Theme.of(context).colorScheme.primary,
-                      )),
+                  Text(
+                    "New Version: v$newVersion",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  const Text("What's new:",
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    "What's new:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   if (changelog != null && changelog.trim().isNotEmpty)
                     MarkdownBody(
                       data: removeReleaseHeading(changelog, newVersion),
                       styleSheet: MarkdownStyleSheet(
                         p: Theme.of(context).textTheme.bodyMedium,
-                        h2: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                        h2: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     )
                   else
-                    Text("No changelog found.",
-                        style:
-                            TextStyle(fontSize: 14, color: Colors.grey[600])),
+                    Text(
+                      "No changelog found.",
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
                 ],
               ),
             ),
@@ -297,8 +308,10 @@ class UpdateChecker {
                   scaffoldMessengerKey,
                 );
               } else {
-                await launchUrl(Uri.parse(releaseUrl),
-                    mode: LaunchMode.externalApplication);
+                await launchUrl(
+                  Uri.parse(releaseUrl),
+                  mode: LaunchMode.externalApplication,
+                );
               }
             },
             child: Text(actionLabel),
@@ -310,13 +323,16 @@ class UpdateChecker {
 
   String removeReleaseHeading(String markdown, String version) {
     final lines = markdown.split('\n');
-    final firstContentIndex =
-        lines.indexWhere((line) => line.trim().isNotEmpty);
+    final firstContentIndex = lines.indexWhere(
+      (line) => line.trim().isNotEmpty,
+    );
     if (firstContentIndex < 0) return markdown;
 
     final heading = lines[firstContentIndex].trim();
-    final cleanVersion =
-        version.split('+').first.replaceFirst(RegExp(r'^v'), '');
+    final cleanVersion = version
+        .split('+')
+        .first
+        .replaceFirst(RegExp(r'^v'), '');
     if (heading.contains(cleanVersion) &&
         (heading.startsWith('#') || heading.startsWith('['))) {
       lines.removeAt(firstContentIndex);
@@ -386,8 +402,9 @@ class UpdateChecker {
       final totalBytes = response.contentLength;
       final directory = await getApplicationSupportDirectory();
       final safeVersion = version.replaceAll(RegExp(r'[^0-9A-Za-z.-]'), '_');
-      final partialFile =
-          File('${directory.path}/quick_insure_$safeVersion.apk.part');
+      final partialFile = File(
+        '${directory.path}/quick_insure_$safeVersion.apk.part',
+      );
       final apkFile = File('${directory.path}/quick_insure_$safeVersion.apk');
       if (await partialFile.exists()) await partialFile.delete();
 
@@ -511,7 +528,8 @@ class UpdateChecker {
       );
       if (response.statusCode != HttpStatus.ok) {
         throw HttpException(
-            'Windows update download failed (${response.statusCode}).');
+          'Windows update download failed (${response.statusCode}).',
+        );
       }
 
       final tempDirectory = await getTemporaryDirectory();
@@ -582,24 +600,20 @@ try {
       installDialogNavigator.pop();
       progressDialogOpen = false;
 
-      await Process.start(
-        'powershell.exe',
-        [
-          '-NoProfile',
-          '-ExecutionPolicy',
-          'Bypass',
-          '-WindowStyle',
-          'Hidden',
-          '-File',
-          script.path,
-          pid.toString(),
-          archive.path,
-          installDirectory.path,
-          executable.path,
-          tempDirectory.path,
-        ],
-        mode: ProcessStartMode.detached,
-      );
+      await Process.start('powershell.exe', [
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-WindowStyle',
+        'Hidden',
+        '-File',
+        script.path,
+        pid.toString(),
+        archive.path,
+        installDirectory.path,
+        executable.path,
+        tempDirectory.path,
+      ], mode: ProcessStartMode.detached);
       await windowManager.close();
     } catch (error) {
       debugPrint('Windows update failed: $error');
@@ -681,7 +695,8 @@ try {
       );
       if (response.statusCode != HttpStatus.ok) {
         throw HttpException(
-            'Windows installer download failed (${response.statusCode}).');
+          'Windows installer download failed (${response.statusCode}).',
+        );
       }
 
       final tempDirectory = await getTemporaryDirectory();
@@ -765,23 +780,19 @@ try {
       installDialogNavigator.pop();
       progressDialogOpen = false;
 
-      await Process.start(
-        'powershell.exe',
-        [
-          '-NoProfile',
-          '-ExecutionPolicy',
-          'Bypass',
-          '-WindowStyle',
-          'Hidden',
-          '-File',
-          script.path,
-          pid.toString(),
-          installer.path,
-          installDirectory.path,
-          executable.path,
-        ],
-        mode: ProcessStartMode.detached,
-      );
+      await Process.start('powershell.exe', [
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-WindowStyle',
+        'Hidden',
+        '-File',
+        script.path,
+        pid.toString(),
+        installer.path,
+        installDirectory.path,
+        executable.path,
+      ], mode: ProcessStartMode.detached);
       await windowManager.close();
     } catch (error) {
       debugPrint('Windows installer update failed: $error');
@@ -843,8 +854,10 @@ try {
     // 1. Instant offline check from bundled asset
     try {
       final localMarkdown = await rootBundle.loadString('assets/CHANGELOG.md');
-      final versionSection =
-          _extractVersionSection(localMarkdown, cleanVersion);
+      final versionSection = _extractVersionSection(
+        localMarkdown,
+        cleanVersion,
+      );
       if (versionSection != null && versionSection.isNotEmpty) {
         return versionSection;
       }
@@ -854,15 +867,19 @@ try {
 
     // 2. Fallback to GitHub Release API
     try {
-      final tagResponse = await http.get(Uri.parse(
-          "https://api.github.com/repos/$githubRepo/releases/tags/v$cleanVersion"));
+      final tagResponse = await http.get(
+        Uri.parse(
+          "https://api.github.com/repos/$githubRepo/releases/tags/v$cleanVersion",
+        ),
+      );
       if (tagResponse.statusCode == 200) {
         final data = jsonDecode(tagResponse.body);
         return data["body"] as String?;
       }
 
-      final latestResponse = await http.get(Uri.parse(
-          "https://api.github.com/repos/$githubRepo/releases/latest"));
+      final latestResponse = await http.get(
+        Uri.parse("https://api.github.com/repos/$githubRepo/releases/latest"),
+      );
       if (latestResponse.statusCode == 200) {
         final data = jsonDecode(latestResponse.body);
         final tag = (data["tag_name"] as String?)?.replaceAll("v", "") ?? "";

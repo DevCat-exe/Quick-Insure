@@ -7,10 +7,7 @@ import '../widgets/result_popup.dart';
 class DesktopHistoryView extends StatefulWidget {
   final VoidCallback? onBackToCalculator;
 
-  const DesktopHistoryView({
-    super.key,
-    this.onBackToCalculator,
-  });
+  const DesktopHistoryView({super.key, this.onBackToCalculator});
 
   @override
   State<DesktopHistoryView> createState() => _DesktopHistoryViewState();
@@ -37,7 +34,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
 
   double _parseBDT(String value) {
     return double.tryParse(
-            value.replaceAll('BDT', '').replaceAll(',', '').trim()) ??
+          value.replaceAll('BDT', '').replaceAll(',', '').trim(),
+        ) ??
         0;
   }
 
@@ -65,8 +63,9 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
       for (final part in risksStr.split(', ')) {
         final trimmed = part.trim();
         if (trimmed.contains(' - BDT ')) {
-          final rateMatch = RegExp(r'^(.+?)\s*\(([\d.]+%)\)\s*-\s*BDT\s*(.+)$')
-              .firstMatch(trimmed);
+          final rateMatch = RegExp(
+            r'^(.+?)\s*\(([\d.]+%)\)\s*-\s*BDT\s*(.+)$',
+          ).firstMatch(trimmed);
           if (rateMatch != null) {
             final riskName = rateMatch.group(1)!.trim();
             final rate = rateMatch.group(2)!;
@@ -76,21 +75,63 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
         }
       }
       return [
-        ResultSection("Property Details", {
-          "Zone": zone,
-        }),
+        ResultSection("Property Details", {"Zone": zone}),
         if (riskEntries.isNotEmpty)
           ResultSection("Selected Risks", riskEntries),
         if (totalRate.isNotEmpty)
-          ResultSection("Summary", {
-            "Total Rate": totalRate,
-          }),
+          ResultSection("Summary", {"Total Rate": totalRate}),
+      ];
+    } else if (item.type == 'Overseas Mediclaim') {
+      return [
+        ResultSection("Policy Plan", {
+          "Plan": details['Plan']?.toString() ?? '',
+        }),
+        ResultSection("Traveller Details", {
+          "Full Name": details['Traveller Name']?.toString() ?? '',
+          "Passport Number": details['Passport Number']?.toString() ?? '',
+          "Date of Birth": details['Date of Birth']?.toString() ?? '',
+          "Insured Age": details['Insured Age']?.toString() ?? '',
+        }),
+        ResultSection("Trip Details", {
+          "Country": details['Country']?.toString() ?? '',
+          "Departure Date": details['Departure Date']?.toString() ?? '',
+          "Return Date": details['Return Date']?.toString() ?? '',
+          "Travel Period": details['Travel Period']?.toString() ?? '',
+        }),
       ];
     } else {
       return [
         ResultSection(
-            "Details", details.map((k, v) => MapEntry(k, v.toString()))),
+          "Details",
+          details.map((k, v) => MapEntry(k, v.toString())),
+        ),
       ];
+    }
+  }
+
+  static IconData _typeIcon(String type) {
+    switch (type) {
+      case 'Motor Insurance':
+        return Icons.directions_car;
+      case 'Fire Insurance':
+        return Icons.local_fire_department;
+      case 'Overseas Mediclaim':
+        return Icons.medical_services;
+      default:
+        return Icons.calculate;
+    }
+  }
+
+  static Color _typeColor(String type) {
+    switch (type) {
+      case 'Motor Insurance':
+        return Colors.blue;
+      case 'Fire Insurance':
+        return Colors.orange;
+      case 'Overseas Mediclaim':
+        return Colors.teal;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -108,7 +149,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
       builder: (ctx) => AlertDialog(
         title: const Text("Clear All History"),
         content: const Text(
-            "Are you sure you want to permanently delete all calculation records?"),
+          "Are you sure you want to permanently delete all calculation records?",
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -208,8 +250,10 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                               ),
                               if (allItems.isNotEmpty)
                                 TextButton.icon(
-                                  icon:
-                                      const Icon(Icons.delete_sweep, size: 18),
+                                  icon: const Icon(
+                                    Icons.delete_sweep,
+                                    size: 18,
+                                  ),
                                   label: const Text("Clear All"),
                                   style: TextButton.styleFrom(
                                     foregroundColor: primary,
@@ -237,7 +281,9 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                                     )
                                   : null,
                               contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -250,6 +296,8 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                                 _buildFilterChip("Motor Insurance"),
                                 const SizedBox(width: 8),
                                 _buildFilterChip("Fire Insurance"),
+                                const SizedBox(width: 8),
+                                _buildFilterChip("Overseas Mediclaim"),
                               ],
                             ),
                           ),
@@ -263,15 +311,20 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.history_outlined,
-                                      size: 48, color: Colors.grey[400]),
+                                  Icon(
+                                    Icons.history_outlined,
+                                    size: 48,
+                                    color: Colors.grey[400],
+                                  ),
                                   const SizedBox(height: 12),
                                   Text(
                                     allItems.isEmpty
                                         ? "No calculation history yet"
                                         : "No matching records found",
                                     style: TextStyle(
-                                        color: Colors.grey[600], fontSize: 14),
+                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -284,7 +337,6 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                               itemBuilder: (context, index) {
                                 final item = filteredItems[index];
                                 final isSelected = item == _selectedItem;
-                                final isMotor = item.type == 'Motor Insurance';
                                 return Material(
                                   color: Colors.transparent,
                                   child: InkWell(
@@ -295,8 +347,9 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? primary
-                                                .withAlpha(isDark ? 50 : 25)
+                                            ? primary.withAlpha(
+                                                isDark ? 50 : 25,
+                                              )
                                             : isDark
                                                 ? Colors.white.withAlpha(5)
                                                 : Colors.grey.withAlpha(12),
@@ -317,20 +370,15 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                                           Container(
                                             padding: const EdgeInsets.all(10),
                                             decoration: BoxDecoration(
-                                              color: (isMotor
-                                                      ? Colors.blue
-                                                      : Colors.orange)
-                                                  .withAlpha(30),
+                                              color: _typeColor(
+                                                item.type,
+                                              ).withAlpha(30),
                                               borderRadius:
                                                   BorderRadius.circular(12),
                                             ),
                                             child: Icon(
-                                              isMotor
-                                                  ? Icons.directions_car
-                                                  : Icons.local_fire_department,
-                                              color: isMotor
-                                                  ? Colors.blue
-                                                  : Colors.orange,
+                                              _typeIcon(item.type),
+                                              color: _typeColor(item.type),
                                               size: 20,
                                             ),
                                           ),
@@ -389,6 +437,19 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                                                     ),
                                                   ),
                                                 ],
+                                                if (item.details['Country'] !=
+                                                    null) ...[
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    "Country: ${item.details['Country']}",
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: theme.textTheme
+                                                          .bodyMedium?.color
+                                                          ?.withAlpha(180),
+                                                    ),
+                                                  ),
+                                                ],
                                                 if (item.details[
                                                         'Registration Number'] !=
                                                     null) ...[
@@ -411,8 +472,10 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                                           ),
                                           const SizedBox(width: 6),
                                           IconButton(
-                                            icon: const Icon(Icons.close,
-                                                size: 16),
+                                            icon: const Icon(
+                                              Icons.close,
+                                              size: 16,
+                                            ),
                                             tooltip: "Delete",
                                             visualDensity:
                                                 VisualDensity.compact,
@@ -436,13 +499,18 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.description_outlined,
-                              size: 64, color: Colors.grey[400]),
+                          Icon(
+                            Icons.description_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             "Select a calculation to inspect details",
                             style: TextStyle(
-                                fontSize: 16, color: Colors.grey[600]),
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
                           ),
                         ],
                       ),
@@ -475,9 +543,7 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         color: isSelected ? primary : null,
       ),
-      side: BorderSide(
-        color: isSelected ? primary : Colors.grey.withAlpha(60),
-      ),
+      side: BorderSide(color: isSelected ? primary : Colors.grey.withAlpha(60)),
       onSelected: (val) {
         if (val) setState(() => _selectedFilter = label);
       },
@@ -489,7 +555,9 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
     final details = item.details;
-    final insuredSum = _parseBDT(details['Insured Sum']?.toString() ?? '0');
+    final insuredSum = details['Insured Sum'] == null
+        ? null
+        : _parseBDT(details['Insured Sum'].toString());
     final netPremium = _parseBDT(details['Net Premium']?.toString() ?? '0');
     final vat = _parseBDT(details['VAT (15%)']?.toString() ?? '0');
     final sections = _buildSections(item);
@@ -532,9 +600,7 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
-                      item.type == 'Motor Insurance'
-                          ? Icons.directions_car
-                          : Icons.local_fire_department,
+                      _typeIcon(item.type),
                       color: Colors.white,
                       size: 28,
                     ),
@@ -577,7 +643,9 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 16),
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                     decoration: BoxDecoration(
                       color: primary.withAlpha(isDark ? 30 : 15),
                       borderRadius: BorderRadius.circular(16),
@@ -625,22 +693,31 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                     children: [
                       Expanded(
                         child: _buildMetricTile(
-                            theme,
-                            "Insured Sum",
-                            insuredSum > 0
-                                ? "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}"
-                                : (details['Insured Sum']?.toString() ??
-                                    'N/A')),
+                          theme,
+                          details['Insured Sum'] == null &&
+                                  details['Country'] != null
+                              ? "Country"
+                              : "Insured Sum",
+                          insuredSum != null
+                              ? "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}"
+                              : (details['Country']?.toString() ?? 'N/A'),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _buildMetricTile(theme, "Net Premium",
-                            "BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}"),
+                        child: _buildMetricTile(
+                          theme,
+                          "Net Premium",
+                          "BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}",
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _buildMetricTile(theme, "VAT (15%)",
-                            "BDT ${NumberFormat("#,##0", "en_US").format(vat)}"),
+                        child: _buildMetricTile(
+                          theme,
+                          "VAT (15%)",
+                          "BDT ${NumberFormat("#,##0", "en_US").format(vat)}",
+                        ),
                       ),
                     ],
                   ),
@@ -663,7 +740,9 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Column(
                         children: section.items.entries.map((e) {
                           return Padding(
@@ -748,10 +827,7 @@ class _DesktopHistoryViewState extends State<DesktopHistoryView> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

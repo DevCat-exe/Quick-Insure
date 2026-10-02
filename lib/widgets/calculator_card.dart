@@ -25,8 +25,9 @@ class _CalculatorCardState extends State<CalculatorCard> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final Color iconCircleColor =
-        isDark ? Colors.white.withAlpha(25) : Colors.white.withAlpha(40);
+    final Color iconCircleColor = isDark
+        ? Colors.white.withAlpha(25)
+        : Colors.white.withAlpha(40);
 
     final LinearGradient cardGradient = isDark
         ? const LinearGradient(
@@ -49,7 +50,11 @@ class _CalculatorCardState extends State<CalculatorCard> {
         curve: Curves.easeOutBack,
         transform: Matrix4.identity()
           ..scaleByDouble(
-              _isTapped ? 0.94 : 1.0, _isTapped ? 0.94 : 1.0, 1.0, 1.0),
+            _isTapped ? 0.94 : 1.0,
+            _isTapped ? 0.94 : 1.0,
+            1.0,
+            1.0,
+          ),
         decoration: BoxDecoration(
           gradient: cardGradient,
           borderRadius: BorderRadius.circular(28),

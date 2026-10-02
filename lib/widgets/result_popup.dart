@@ -14,7 +14,7 @@ class ResultPopup extends StatelessWidget {
   final double netPremium;
   final double vat;
   final double totalPremium;
-  final double insuredSum;
+  final double? insuredSum;
   final List<ResultSection> sections;
   final Map<String, dynamic> exportDetails;
 
@@ -24,7 +24,7 @@ class ResultPopup extends StatelessWidget {
     required this.netPremium,
     required this.vat,
     required this.totalPremium,
-    required this.insuredSum,
+    this.insuredSum,
     required this.sections,
     required this.exportDetails,
   });
@@ -80,8 +80,11 @@ class ResultPopup extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.receipt_long,
-                          color: Colors.white, size: isSmallScreen ? 40 : 48),
+                      Icon(
+                        Icons.receipt_long,
+                        color: Colors.white,
+                        size: isSmallScreen ? 40 : 48,
+                      ),
                       SizedBox(height: isSmallScreen ? 10 : 16),
                       Text(
                         title,
@@ -106,36 +109,45 @@ class ResultPopup extends StatelessWidget {
                         SizedBox(height: isSmallScreen ? 8 : 12),
                         for (var item in section.items.entries)
                           if (item.value.isNotEmpty)
-                            _buildResultRow(item.key, item.value, theme,
-                                isSmallScreen: isSmallScreen),
+                            _buildResultRow(
+                              item.key,
+                              item.value,
+                              theme,
+                              isSmallScreen: isSmallScreen,
+                            ),
                         SizedBox(height: isSmallScreen ? 16 : 24),
                       ],
                       Divider(color: theme.dividerColor.withAlpha(40)),
                       SizedBox(height: isSmallScreen ? 16 : 24),
-                      _buildPremiumRow(
+                      if (insuredSum != null)
+                        _buildPremiumRow(
                           "Insured Sum",
                           "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
                           theme,
                           isBold: false,
-                          isSmallScreen: isSmallScreen),
+                          isSmallScreen: isSmallScreen,
+                        ),
                       _buildPremiumRow(
-                          "Net Premium",
-                          "BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}",
-                          theme,
-                          isBold: false,
-                          isSmallScreen: isSmallScreen),
+                        "Net Premium",
+                        "BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}",
+                        theme,
+                        isBold: false,
+                        isSmallScreen: isSmallScreen,
+                      ),
                       _buildPremiumRow(
-                          "VAT (15%)",
-                          "BDT ${NumberFormat("#,##0", "en_US").format(vat)}",
-                          theme,
-                          isBold: false,
-                          isSmallScreen: isSmallScreen),
+                        "VAT (15%)",
+                        "BDT ${NumberFormat("#,##0", "en_US").format(vat)}",
+                        theme,
+                        isBold: false,
+                        isSmallScreen: isSmallScreen,
+                      ),
                       const SizedBox(height: 12),
                       Container(
                         width: double.infinity,
                         padding: EdgeInsets.symmetric(
-                            vertical: isSmallScreen ? 12 : 16,
-                            horizontal: isSmallScreen ? 14 : 20),
+                          vertical: isSmallScreen ? 12 : 16,
+                          horizontal: isSmallScreen ? 14 : 20,
+                        ),
                         decoration: BoxDecoration(
                           color: accent.withAlpha(15),
                           borderRadius: BorderRadius.circular(16),
@@ -173,9 +185,11 @@ class ResultPopup extends StatelessWidget {
                               icon: const Icon(Icons.picture_as_pdf, size: 18),
                               style: OutlinedButton.styleFrom(
                                 padding: EdgeInsets.symmetric(
-                                    vertical: isSmallScreen ? 14 : 20),
+                                  vertical: isSmallScreen ? 14 : 20,
+                                ),
                                 side: BorderSide(
-                                    color: theme.colorScheme.primary),
+                                  color: theme.colorScheme.primary,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -193,7 +207,8 @@ class ResultPopup extends StatelessWidget {
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 padding: EdgeInsets.symmetric(
-                                    vertical: isSmallScreen ? 14 : 20),
+                                  vertical: isSmallScreen ? 14 : 20,
+                                ),
                                 backgroundColor: theme.colorScheme.primary,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
@@ -229,8 +244,12 @@ class ResultPopup extends StatelessWidget {
     );
   }
 
-  Widget _buildResultRow(String label, String value, ThemeData theme,
-      {required bool isSmallScreen}) {
+  Widget _buildResultRow(
+    String label,
+    String value,
+    ThemeData theme, {
+    required bool isSmallScreen,
+  }) {
     if (label == 'Registration Number') {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -263,9 +282,12 @@ class ResultPopup extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(fontSize: isSmallScreen ? 13 : null)),
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontSize: isSmallScreen ? 13 : null,
+            ),
+          ),
           Flexible(
             child: Text(
               value,
@@ -283,10 +305,14 @@ class ResultPopup extends StatelessWidget {
     );
   }
 
-  Widget _buildPremiumRow(String label, String value, ThemeData theme,
-      {required bool isBold,
-      bool highlight = false,
-      required bool isSmallScreen}) {
+  Widget _buildPremiumRow(
+    String label,
+    String value,
+    ThemeData theme, {
+    required bool isBold,
+    bool highlight = false,
+    required bool isSmallScreen,
+  }) {
     final double labelFontSize =
         highlight ? (isSmallScreen ? 16 : 18) : (isSmallScreen ? 14 : 16);
     final double valueFontSize =

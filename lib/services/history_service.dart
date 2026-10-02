@@ -16,19 +16,21 @@ class CalculationHistoryItem {
   });
 
   Map<String, dynamic> toJson() => {
-        'date': date,
-        'type': type,
-        'totalPremium': totalPremium,
-        'details': details,
-      };
+    'date': date,
+    'type': type,
+    'totalPremium': totalPremium,
+    'details': details,
+  };
 
   bool matchesSearch(String query) {
     final rawQuery = query.trim().toLowerCase();
     if (rawQuery.isEmpty) return true;
 
     final normalizedQuery = _normalizeSearchText(rawQuery);
-    final formattedPremium =
-        NumberFormat('#,##0', 'en_US').format(totalPremium);
+    final formattedPremium = NumberFormat(
+      '#,##0',
+      'en_US',
+    ).format(totalPremium);
     final values = [
       type,
       date,
@@ -49,8 +51,10 @@ class CalculationHistoryItem {
 
   List<String> _dateSearchAliases() {
     try {
-      final parsedDate =
-          DateFormat('dd MMM yyyy, hh:mm a', 'en_US').parseStrict(date);
+      final parsedDate = DateFormat(
+        'dd MMM yyyy, hh:mm a',
+        'en_US',
+      ).parseStrict(date);
       return [
         DateFormat('d/M/yy').format(parsedDate),
         DateFormat('dd/MM/yy').format(parsedDate),

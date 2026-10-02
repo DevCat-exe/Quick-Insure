@@ -10,6 +10,8 @@ class CustomTextField extends StatelessWidget {
   final IconData? prefixIcon;
   final List<TextInputFormatter>? inputFormatters;
   final Function(String)? onChanged;
+  final VoidCallback? onSubmitted;
+  final FocusNode? focusNode;
   final TextInputType keyboardType;
   final TextCapitalization textCapitalization;
   final TextInputAction textInputAction;
@@ -23,6 +25,8 @@ class CustomTextField extends StatelessWidget {
     this.prefixIcon,
     this.inputFormatters,
     this.onChanged,
+    this.onSubmitted,
+    this.focusNode,
     this.keyboardType = TextInputType.text,
     this.textCapitalization = TextCapitalization.none,
     this.textInputAction = TextInputAction.next,
@@ -32,11 +36,13 @@ class CustomTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       keyboardType: keyboardType,
       textCapitalization: textCapitalization,
       textInputAction: textInputAction,
       inputFormatters: inputFormatters,
       onChanged: onChanged,
+      onSubmitted: onSubmitted == null ? null : (_) => onSubmitted!(),
       decoration: InputDecoration(
         labelText: labelText,
         hintText: hintText,

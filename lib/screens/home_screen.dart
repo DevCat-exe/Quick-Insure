@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../services/update_checker.dart';
 import '../screens/motor_insurance_calculator.dart';
 import '../screens/fire_insurance_calculator.dart';
+import '../screens/overseas_mediclaim_calculator.dart';
 import '../widgets/calculator_card.dart';
 import '../screens/history_screen.dart';
 import '../widgets/desktop_app_shell.dart';
@@ -70,7 +71,9 @@ class HomeScreenState extends State<HomeScreen>
 
   Future<void> _checkForUpdate() async {
     bool updated = await _updateChecker.checkForUpdate(
-        context, widget.scaffoldMessengerKey);
+      context,
+      widget.scaffoldMessengerKey,
+    );
     if (!updated && mounted) {
       final theme = Theme.of(context);
       final messenger = ScaffoldMessenger.of(context);
@@ -78,8 +81,10 @@ class HomeScreenState extends State<HomeScreen>
         SnackBar(
           content: Text(
             "You are using the latest version!",
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: Colors.white, fontSize: 13),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: Colors.white,
+              fontSize: 13,
+            ),
           ),
           backgroundColor: theme.colorScheme.primary,
           behavior: SnackBarBehavior.floating,
@@ -118,8 +123,10 @@ class HomeScreenState extends State<HomeScreen>
             return AlertDialog(
               title: const Text("About Quick Insure"),
               content: ConstrainedBox(
-                constraints:
-                    BoxConstraints(maxWidth: dialogWidth, minHeight: 120),
+                constraints: BoxConstraints(
+                  maxWidth: dialogWidth,
+                  minHeight: 120,
+                ),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -128,7 +135,8 @@ class HomeScreenState extends State<HomeScreen>
                       Text("Version: $_appVersion"),
                       const SizedBox(height: 10),
                       const Text(
-                          "Quick Insure is your trusted insurance partner."),
+                        "Quick Insure is your trusted insurance partner.",
+                      ),
                       const SizedBox(height: 18),
                       Text(
                         "Changelog:",
@@ -175,7 +183,8 @@ class HomeScreenState extends State<HomeScreen>
                       Text("Version: $_appVersion"),
                       const SizedBox(height: 10),
                       const Text(
-                          "Quick Insure is your trusted insurance partner."),
+                        "Quick Insure is your trusted insurance partner.",
+                      ),
                       const SizedBox(height: 18),
                       Text(
                         "Changelog:",
@@ -187,7 +196,8 @@ class HomeScreenState extends State<HomeScreen>
                       const SizedBox(height: 6),
                       if (snapshot.connectionState == ConnectionState.waiting)
                         const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2))
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       else if (changelog != null && changelog.trim().isNotEmpty)
                         MarkdownBody(
                           data: _updateChecker.removeReleaseHeading(
@@ -233,6 +243,9 @@ class HomeScreenState extends State<HomeScreen>
     return await _updateChecker.fetchChangelogForVersion(currentVersion);
   }
 
+  // Kept for calculators that are not implemented yet, so a card can be wired
+  // back to a "coming soon" dialog at any time.
+  // ignore: unused_element
   void _showComingSoonPopup(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -277,7 +290,7 @@ class HomeScreenState extends State<HomeScreen>
               ),
               const SizedBox(height: 12),
               Text(
-                "The Overseas Mediclaim Calculator is currently under construction. We're working hard to bring this feature to you soon!",
+                "This calculator is currently under construction. We're working hard to bring this feature to you soon!",
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium,
               ),
@@ -355,9 +368,11 @@ class HomeScreenState extends State<HomeScreen>
                     actions: [
                       IconButton(
                         tooltip: widget.darkMode ? 'Light mode' : 'Dark mode',
-                        icon: Icon(widget.darkMode
-                            ? Icons.light_mode_outlined
-                            : Icons.dark_mode_outlined),
+                        icon: Icon(
+                          widget.darkMode
+                              ? Icons.light_mode_outlined
+                              : Icons.dark_mode_outlined,
+                        ),
                         onPressed: widget.onToggleDarkMode,
                       ),
                       PopupMenuButton<String>(
@@ -383,7 +398,9 @@ class HomeScreenState extends State<HomeScreen>
                     opacity: _fadeInAnimation,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 24.0, horizontal: 8.0),
+                        vertical: 24.0,
+                        horizontal: 8.0,
+                      ),
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           final screenWidth = MediaQuery.of(context).size.width;
@@ -426,8 +443,16 @@ class HomeScreenState extends State<HomeScreen>
                               ),
                               CalculatorCard(
                                 title: 'Overseas Mediclaim',
-                                icon: Icons.health_and_safety,
-                                onTap: () => _showComingSoonPopup(context),
+                                icon: Icons.medical_services,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          OverseasMediclaimCalculator(),
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           );

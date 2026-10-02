@@ -43,7 +43,9 @@ class ExportService {
                 pw.Text(
                   'Insurance Premium Receipt',
                   style: pw.TextStyle(
-                      fontSize: 20, fontWeight: pw.FontWeight.bold),
+                    fontSize: 20,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
                 pw.SizedBox(height: 10),
                 pw.Text('Type: $title', style: pw.TextStyle(fontSize: 16)),
@@ -51,7 +53,9 @@ class ExportService {
                 pw.Text(
                   'Calculation Details',
                   style: pw.TextStyle(
-                      fontSize: 14, fontWeight: pw.FontWeight.bold),
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
                 pw.SizedBox(height: 10),
                 pw.TableHelper.fromTextArray(
@@ -66,8 +70,9 @@ class ExportService {
                   padding: const pw.EdgeInsets.all(20),
                   decoration: pw.BoxDecoration(
                     color: PdfColors.grey100,
-                    borderRadius:
-                        const pw.BorderRadius.all(pw.Radius.circular(10)),
+                    borderRadius: const pw.BorderRadius.all(
+                      pw.Radius.circular(10),
+                    ),
                   ),
                   child: pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -75,7 +80,9 @@ class ExportService {
                       pw.Text(
                         'Total Premium',
                         style: pw.TextStyle(
-                            fontSize: 18, fontWeight: pw.FontWeight.bold),
+                          fontSize: 18,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
                       ),
                       pw.Text(
                         'BDT ${NumberFormat("#,##0", "en_US").format(totalPremium)}',

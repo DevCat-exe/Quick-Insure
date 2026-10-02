@@ -11,7 +11,7 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
   final double netPremium;
   final double vat;
   final double totalPremium;
-  final double insuredSum;
+  final double? insuredSum;
   final List<ResultSection> sections;
   final Map<String, dynamic> exportDetails;
   final bool isValid;
@@ -24,7 +24,7 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
     required this.netPremium,
     required this.vat,
     required this.totalPremium,
-    required this.insuredSum,
+    this.insuredSum,
     required this.sections,
     required this.exportDetails,
     required this.isValid,
@@ -47,8 +47,11 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
         context,
         content: Row(
           children: [
-            const Icon(Icons.check_circle_outline,
-                color: Colors.white, size: 20),
+            const Icon(
+              Icons.check_circle_outline,
+              color: Colors.white,
+              size: 20,
+            ),
             const SizedBox(width: 10),
             Text("Calculation saved to history!"),
           ],
@@ -65,15 +68,22 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
     final buffer = StringBuffer();
     buffer.writeln("=== QUICK INSURE: $title ===");
     buffer.writeln(
-        "Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now())}");
+      "Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now())}",
+    );
+    if (insuredSum != null) {
+      buffer.writeln(
+        "Sum Insured: BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
+      );
+    }
     buffer.writeln(
-        "Sum Insured: BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}");
+      "Net Premium: BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}",
+    );
     buffer.writeln(
-        "Net Premium: BDT ${NumberFormat("#,##0", "en_US").format(netPremium)}");
+      "VAT (15%): BDT ${NumberFormat("#,##0", "en_US").format(vat)}",
+    );
     buffer.writeln(
-        "VAT (15%): BDT ${NumberFormat("#,##0", "en_US").format(vat)}");
-    buffer.writeln(
-        "TOTAL PREMIUM: BDT ${NumberFormat("#,##0", "en_US").format(totalPremium)}");
+      "TOTAL PREMIUM: BDT ${NumberFormat("#,##0", "en_US").format(totalPremium)}",
+    );
     for (final sec in sections) {
       buffer.writeln("\n[${sec.title}]");
       sec.items.forEach((k, v) => buffer.writeln("$k: $v"));
@@ -182,8 +192,11 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                       color: Colors.white.withAlpha(30),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.receipt_long,
-                        color: Colors.white, size: 26),
+                    child: const Icon(
+                      Icons.receipt_long,
+                      color: Colors.white,
+                      size: 26,
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -217,7 +230,9 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 16),
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                     decoration: BoxDecoration(
                       color: primary.withAlpha(isDark ? 30 : 15),
                       borderRadius: BorderRadius.circular(16),
@@ -264,15 +279,17 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                   const SizedBox(height: 20),
                   Row(
                     children: [
-                      Expanded(
-                        child: _buildMetricTile(
-                          theme,
-                          "Insured Sum",
-                          "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
-                          Icons.shield_outlined,
+                      if (insuredSum != null) ...[
+                        Expanded(
+                          child: _buildMetricTile(
+                            theme,
+                            "Insured Sum",
+                            "BDT ${NumberFormat("#,##0", "en_US").format(insuredSum)}",
+                            Icons.shield_outlined,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
+                        const SizedBox(width: 12),
+                      ],
                       Expanded(
                         child: _buildMetricTile(
                           theme,
@@ -311,7 +328,9 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       child: Column(
                         children: section.items.entries.map((e) {
                           if (e.key == 'Registration Number') {
@@ -397,8 +416,10 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton.icon(
-                          icon:
-                              const Icon(Icons.bookmark_add_outlined, size: 18),
+                          icon: const Icon(
+                            Icons.bookmark_add_outlined,
+                            size: 18,
+                          ),
                           label: const Text("Save"),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -422,7 +443,8 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                               side: BorderSide(
-                                  color: theme.dividerColor.withAlpha(50)),
+                                color: theme.dividerColor.withAlpha(50),
+                              ),
                             ),
                           ),
                         ),
@@ -439,7 +461,11 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
   }
 
   Widget _buildMetricTile(
-      ThemeData theme, String label, String value, IconData icon) {
+    ThemeData theme,
+    String label,
+    String value,
+    IconData icon,
+  ) {
     final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
@@ -472,10 +498,7 @@ class DesktopCalculationSummaryCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

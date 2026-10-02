@@ -69,8 +69,9 @@ class AppStyles {
         ),
         bodyMedium: TextStyle(
           fontSize: 16,
-          color:
-              isDark ? Colors.white.withAlpha(200) : accentColor.withAlpha(220),
+          color: isDark
+              ? Colors.white.withAlpha(200)
+              : accentColor.withAlpha(220),
           height: 1.6,
         ),
         labelLarge: TextStyle(fontWeight: FontWeight.w800, color: primaryColor),

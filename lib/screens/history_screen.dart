@@ -7,10 +7,7 @@ import '../widgets/desktop_history_view.dart';
 class HistoryScreen extends StatefulWidget {
   final bool isEmbeddedInDesktop;
 
-  const HistoryScreen({
-    super.key,
-    this.isEmbeddedInDesktop = false,
-  });
+  const HistoryScreen({super.key, this.isEmbeddedInDesktop = false});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -24,7 +21,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   double _parseBDT(String value) {
     return double.tryParse(
-            value.replaceAll('BDT', '').replaceAll(',', '').trim()) ??
+          value.replaceAll('BDT', '').replaceAll(',', '').trim(),
+        ) ??
         0;
   }
 
@@ -48,7 +46,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   void _showHistoryItemPopup(CalculationHistoryItem item) {
     final details = item.details;
-    final insuredSum = _parseBDT(details['Insured Sum']?.toString() ?? '0');
+    final insuredSum = details['Insured Sum'] == null
+        ? null
+        : _parseBDT(details['Insured Sum'].toString());
     final netPremium = _parseBDT(details['Net Premium']?.toString() ?? '0');
     final vat = _parseBDT(details['VAT (15%)']?.toString() ?? '0');
 
@@ -76,8 +76,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
       for (final part in risksStr.split(', ')) {
         final trimmed = part.trim();
         if (trimmed.contains(' - BDT ')) {
-          final rateMatch = RegExp(r'^(.+?)\s*\(([\d.]+%)\)\s*-\s*BDT\s*(.+)$')
-              .firstMatch(trimmed);
+          final rateMatch = RegExp(
+            r'^(.+?)\s*\(([\d.]+%)\)\s*-\s*BDT\s*(.+)$',
+          ).firstMatch(trimmed);
           if (rateMatch != null) {
             final riskName = rateMatch.group(1)!.trim();
             final rate = rateMatch.group(2)!;
@@ -87,20 +88,36 @@ class _HistoryScreenState extends State<HistoryScreen> {
         }
       }
       sections = [
-        ResultSection("Property Details", {
-          "Zone": zone,
-        }),
+        ResultSection("Property Details", {"Zone": zone}),
         if (riskEntries.isNotEmpty)
           ResultSection("Selected Risks", riskEntries),
         if (totalRate.isNotEmpty)
-          ResultSection("Summary", {
-            "Total Rate": totalRate,
-          }),
+          ResultSection("Summary", {"Total Rate": totalRate}),
+      ];
+    } else if (item.type == 'Overseas Mediclaim') {
+      sections = [
+        ResultSection("Policy Plan", {
+          "Plan": details['Plan']?.toString() ?? '',
+        }),
+        ResultSection("Traveller Details", {
+          "Full Name": details['Traveller Name']?.toString() ?? '',
+          "Passport Number": details['Passport Number']?.toString() ?? '',
+          "Date of Birth": details['Date of Birth']?.toString() ?? '',
+          "Insured Age": details['Insured Age']?.toString() ?? '',
+        }),
+        ResultSection("Trip Details", {
+          "Country": details['Country']?.toString() ?? '',
+          "Departure Date": details['Departure Date']?.toString() ?? '',
+          "Return Date": details['Return Date']?.toString() ?? '',
+          "Travel Period": details['Travel Period']?.toString() ?? '',
+        }),
       ];
     } else {
       sections = [
         ResultSection(
-            "Details", details.map((k, v) => MapEntry(k, v.toString()))),
+          "Details",
+          details.map((k, v) => MapEntry(k, v.toString())),
+        ),
       ];
     }
 
@@ -116,6 +133,32 @@ class _HistoryScreenState extends State<HistoryScreen> {
         exportDetails: details,
       ),
     );
+  }
+
+  static IconData _typeIcon(String type) {
+    switch (type) {
+      case 'Motor Insurance':
+        return Icons.directions_car;
+      case 'Fire Insurance':
+        return Icons.local_fire_department;
+      case 'Overseas Mediclaim':
+        return Icons.medical_services;
+      default:
+        return Icons.calculate;
+    }
+  }
+
+  static Color _typeColor(String type) {
+    switch (type) {
+      case 'Motor Insurance':
+        return Colors.blue;
+      case 'Fire Insurance':
+        return Colors.orange;
+      case 'Overseas Mediclaim':
+        return Colors.teal;
+      default:
+        return Colors.grey;
+    }
   }
 
   void _confirmClearHistory() {
@@ -210,6 +253,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
             if (_selectedFilter == 'Fire' && item.type != 'Fire Insurance') {
               return false;
             }
+            if (_selectedFilter == 'Overseas' &&
+                item.type != 'Overseas Mediclaim') {
+              return false;
+            }
             if (query.isEmpty) return true;
             return item.matchesSearch(query);
           }).toList();
@@ -283,13 +330,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           child: Wrap(
                             spacing: 8,
                             children: [
-                              for (final filter in ['All', 'Motor', 'Fire'])
+                              for (final filter in [
+                                'All',
+                                'Motor',
+                                'Fire',
+                                'Overseas',
+                              ])
                                 ChoiceChip(
                                   label: Text(filter),
                                   selected: _selectedFilter == filter,
-                                  onSelected: (_) => setState(
-                                    () => _selectedFilter = filter,
-                                  ),
+                                  onSelected: (_) =>
+                                      setState(() => _selectedFilter = filter),
                                 ),
                             ],
                           ),
@@ -312,7 +363,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 }
 
                 final item = history[index - 1];
-                final isMotor = item.type == 'Motor Insurance';
 
                 return Dismissible(
                   key: Key('${item.date}_$index'),
@@ -348,22 +398,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         padding: const EdgeInsets.all(16),
                         child: LayoutBuilder(
                           builder: (context, constraints) {
-                            final textScale =
-                                MediaQuery.textScalerOf(context).scale(1);
+                            final textScale = MediaQuery.textScalerOf(
+                              context,
+                            ).scale(1);
                             final compact =
                                 constraints.maxWidth < 460 * textScale;
                             final icon = Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: (isMotor ? Colors.blue : Colors.orange)
-                                    .withAlpha(30),
+                                color: _typeColor(item.type).withAlpha(30),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                isMotor
-                                    ? Icons.directions_car
-                                    : Icons.local_fire_department,
-                                color: isMotor ? Colors.blue : Colors.orange,
+                                _typeIcon(item.type),
+                                color: _typeColor(item.type),
                                 size: 24,
                               ),
                             );
@@ -389,6 +437,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                   const SizedBox(height: 3),
                                   Text(
                                     "Insured: ${item.details['Insured Sum']}",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? Colors.white60
+                                          : Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                                if (item.details['Country'] != null) ...[
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    "Country: ${item.details['Country']}",
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: isDark
