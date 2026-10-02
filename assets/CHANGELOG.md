@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.3.0] - 2026-10-02
+
+**Overseas Mediclaim Calculator**
+
+### New Features
+
+- **Overseas Mediclaim:** Added Plan A and Plan C travel insurance calculations using the configured age and trip-duration tariffs, including no-cover outcomes.
+- **Country entry:** Added JSON-backed country suggestions with free-text entry, Plan A destination restrictions for the United States and Canada, and clear coverage feedback.
+
+### Improved
+
+- **History:** Added Overseas Mediclaim filtering, saved-record display, and result details.
+- **Coverage eligibility:** Validate the six-month minimum age at departure and explain age, trip-length, tariff, and Plan A destination exclusions.
+
 ## [2.2.0] - 2026-09-29
 
 **Registration and Update Improvements**

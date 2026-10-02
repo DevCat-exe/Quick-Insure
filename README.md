@@ -1,8 +1,9 @@
 # Quick Insure
 
-**Quick Insure** is a modern, Android **Flutter insurance calculator app** designed to help users accurately calculate insurance premiums with a clean UI, smooth animations, and offline-first performance.
+**Quick Insure** is a Flutter insurance calculator for Android and Windows. It helps users calculate premiums with a clean interface and supports offline calculations.
 
-The app currently supports **Motor Insurance** and **Fire Insurance**
+The app currently supports **Motor Insurance**, **Fire Insurance**, and
+**Overseas Mediclaim**.
 
 ---
 
@@ -12,8 +13,8 @@ The app currently supports **Motor Insurance** and **Fire Insurance**
 | ------------------------------- | ------------------------------ |
 | ![](screenshots/home_light.png) | ![](screenshots/home_dark.png) |
 
-| Motor Insurance Calculator      | Fire Insurance Calculator        | Calculation History          |
-| ------------------------------- | ------------------------------- | ---------------------------- |
+| Motor Insurance Calculator      | Fire Insurance Calculator      | Calculation History          |
+| ------------------------------- | ------------------------------ | ---------------------------- |
 | ![](screenshots/motor_calc.png) | ![](screenshots/fire_calc.png) | ![](screenshots/history.png) |
 
 ---
@@ -22,11 +23,11 @@ The app currently supports **Motor Insurance** and **Fire Insurance**
 
 Every release is published on the [releases page](https://github.com/DevCat-exe/Quick-Insure/releases/latest).
 
-| Platform            | Download                                                                                                                   |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Android             | [quick_insure.apk](https://github.com/DevCat-exe/Quick-Insure/releases/latest/download/quick_insure.apk)                    |
+| Platform            | Download                                                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Android             | [quick_insure.apk](https://github.com/DevCat-exe/Quick-Insure/releases/latest/download/quick_insure.apk)                             |
 | Windows (installer) | [quick_insure_windows_setup.exe](https://github.com/DevCat-exe/Quick-Insure/releases/latest/download/quick_insure_windows_setup.exe) |
-| Windows (portable)  | [quick_insure_windows.zip](https://github.com/DevCat-exe/Quick-Insure/releases/latest/download/quick_insure_windows.zip)     |
+| Windows (portable)  | [quick_insure_windows.zip](https://github.com/DevCat-exe/Quick-Insure/releases/latest/download/quick_insure_windows.zip)             |
 
 The Windows installer adds Start Menu and optional desktop shortcuts and can be removed from Windows Settings.
 The portable ZIP only needs to be unpacked, then `quick_insure.exe` can be run from that folder.
@@ -42,6 +43,10 @@ The portable ZIP only needs to be unpacked, then `quick_insure.exe` can be run f
   Zone-based property insurance with multiple risk options (Fire, Earthquake, Cyclone, Flood)
   and individual premium breakdowns
 
+- **Overseas Mediclaim Calculator**
+  Calculate travel premiums using Plan A or Plan C tariffs, traveller age, trip duration,
+  and destination, with country suggestions and coverage validation
+
 - **Calculation History**  
   Automatically saves previous calculations for quick reference
 
@@ -55,12 +60,12 @@ The portable ZIP only needs to be unpacked, then `quick_insure.exe` can be run f
 
 ## Tech Stack
 
-| Category  | Technologies                               |
-| --------- | ------------------------------------------ |
-| Framework | Flutter                                    |
-| Language  | Dart                                       |
-| UI        | Material Design, Custom Animations         |
-| State     | Local state management                     |
+| Category  | Technologies                                        |
+| --------- | --------------------------------------------------- |
+| Framework | Flutter                                             |
+| Language  | Dart                                                |
+| UI        | Material Design, Custom Animations                  |
+| State     | Local state management                              |
 | Platform  | Android (APK), Windows (installer and portable ZIP) |
 
 ## 📦 Getting Started
@@ -83,7 +88,3 @@ flutter run
 - Android emulator or physical device
 
 ---
-
-## Planned Features
-
-- 🏥 Overseas Mediclaim Calculator
